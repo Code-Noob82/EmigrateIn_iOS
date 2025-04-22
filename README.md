@@ -108,3 +108,10 @@ Diese App nutzt externe Bibliotheken, die über den **Swift Package Manager (SPM
 ## Autor
 
 **Dominik Baki**, Student am **Syntax Institut** im Kurs Fachkraft für App-Entwicklung (iOS & Android).
+
+## Danksagung
+
+- Dank an [Name des Tutors] für die Betreuung.
+- Inspiration und erste Informationen aus den Ressourcen von [AuswandernHilft.de].
+- Daten der deutschen Vertretungen bereitgestellt durch die OpenData-Schnittstelle des Auswärtigen Amtes.
+- Backend-Dienste bereitgestellt durch Google Firebase.
