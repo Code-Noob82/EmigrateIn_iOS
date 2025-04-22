@@ -46,6 +46,29 @@ Im Gegensatz zu allgemeinen Foren oder Webseiten, konzentriert sich EmigrateIn *
   <img src="./img/screen1.png" width="200">
 </p>
 
+## Projektstruktur & Architektur Übersicht
+
+### 1. Architektur: MVVM (Model-View-ViewModel)
+
+Die App folgt dem **MVVM (Model-View-ViewModel)** Architekturmuster, das sich gut für SwiftUI eignet und eine klare Trennung der Verantwortlichkeiten fördert:
+
+- **Model:** Repräsentiert die Daten der App (z.B. `InfoCategory`, `ChecklistItem`, `Embassy`). Diese Strukturen sind `Codable`, um Daten aus Firebase oder APIs zu parsen. Sie enthalten keine Logik zur Darstellung oder Datenbeschaffung.
+  -  *Ordner:* `Models`
+ 
+- **View:** Repräsentiert die Benutzeroberfläche (UI), die der Nutzer sieht.
+  - *Ordner:* `Views` *(weiter unterteilt nach Features, z.B. `Onboarding`, `InfoHub`, `Checklists`)*
+
+- **ViewModel:** Dient als Bindeglied zwischen Model und View. Es bereitet Daten aus dem Model für die Anzeige in der View auf, hält den Zustand der View *(z.B. Ladezustand, Eingaben)* und verarbeitet Benutzeraktionen. ViewModels sind `ObservableObject`, damit die Views auf Änderungen reagieren können. Sie enthalten die Präsentationslogik und rufen Repositories auf, um Daten zu laden oder zu speichern.
+  - *Ordner:* `ViewModels`
+ 
+### 2. Abstraktion der Datenquelle: Repository Pattern
+
+Um die ViewModels von der konkreten Datenquelle (Firebase, API, UserDefaults) zu entkoppeln und die Testbarkeit zu verbessern, setze ich das Repository Pattern ein:
+
+- **Services/Repositories:** Diese Klassen kapseln die Logik für den Datenzugriff. Es gibt z.B. ein `ContentRepository`, das für das Laden von Infos und Checklisten aus Firestore zuständig ist, und einen `ApiService` *(oder `EmbassyRepository`)*, der den API-Call zum Auswärtigen Amt durchführt. Die ViewModels kommunizieren nur mit diesen Repositories/Services, nicht direkt mit Firebase oder `URLSession`.
+
+  - *Ordner:* `Repositories` oder `Services`
+
 ## Technologie-Stack
 
 - **Plattform:** iOS
@@ -59,11 +82,16 @@ Im Gegensatz zu allgemeinen Foren oder Webseiten, konzentriert sich EmigrateIn *
 - **Daten-Parsing:** `Codable`für JSON-Daten aus Firebase und der API.
 - **Lokale Daten:** `SwiftData`für einfache Einstellungen oder Checklisten-Status.
 
-#### Projektaufbau
-Eine kurze Beschreibung deiner Ordnerstruktur und Architektur (MVVM, Repositories) um Außenstehenden zu helfen, sich in deinem Projekt zurecht zu finden.
+### Externe Abhängigkeiten / Frameworks
+Diese App nutzt externe Bibliotheken, die über den **Swift Package Manager (SPM)** eingebunden werden:
 
-#### 3rd-Party Frameworks
-Verwendest du Frameworks, die nicht von dir stammen? Bspw. Swift Packages für Firebase, fertige SwiftUI-Views o.Ä.? Gib diese hier an.
+- **Firebase:**
+
+  - **Zweck:** Dient als Backend-as-a-Service (BaaS).
+  - **Verwendete Module (Beispiele):**
+    - `FirebaseFirestore`: Für den Zugriff auf die NoSQL-Dokumentendatenbank Firestore *(Speicherung von Infos, Checklisten)*.
+    - `FirebaseFirestoreSwift`: Bietet Codable-Unterstützung für Firestore, um Daten einfach in Swift-Strukturen zu mappen *(z.B. mit @DocumentID)*.
+    - `FirebaseAuth` *(optional)*: Falls Nutzerkonten für die Speicherung von Checklisten-Fortschritten implementiert werden.
 
 ## Ausblick
 
