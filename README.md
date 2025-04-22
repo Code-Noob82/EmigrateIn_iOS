@@ -1,18 +1,22 @@
-## EmigrateIn (Arbeitstitel, Name wird ggf. noch geändert)
+# EmigrateIn - Expat Familien App (MVP)
 
 **Gut vorbereitet auswandern – mit EmigrateIn.**
 
-## Was bietet die App?
+## Projektbeschreibung
 
-EmigrateIn ist dein persönlicher Begleiter für die Auswanderung mit Familie nach Südzypern. Die App bündelt alle wichtigen Informationen – von Visa-Bestimmungen über Behördengänge bis hin zu Wohnen und Schule – an einem zentralen Ort. Mit interaktiven Checklisten behältst du den Überblick über alle notwendigen Schritte während der Vorbereitung in Deutschland und den ersten Wochen nach deiner Ankunft auf Zypern.
+**EmigrateIn** *(Arbeitstitel, Name wird ggf. noch geändert)* ist eine native iOS-App, die als Minimum Viable Product (MVP) im Rahmen des **Abschlussprojekts Modul 3 - App-Entwicklung iOS - am Syntax Institut** entwickelt wurde.
 
-## Für wen ist sie geeignet?
+## Ziel der App
 
-Die App richtet sich speziell an **deutsche Familien**, die planen, nach **Südzypern** auszuwandern oder gerade dort angekommen sind. Sie ist ideal für alle, die sich überfordert fühlen von der Fülle an Informationen und eine strukturierte Hilfe bei der Organisation ihres Umzugs suchen.
+Deutschen Familien den komplexen Prozess der Auswanderung nach Südzypern zu erleichtern. Die App soll als zentraler Informations-Hub und Begleiter dienen, um Unsicherheiten zu reduzieren und die Vorbereitung sowie die ersten Schritte nach der Ankunft zu strukturieren.
 
-## Welches Problem löst sie?
+## Problemstellung
 
-Die Auswanderung mit Familie ist komplex und oft stressig. Informationen sind verstreut, schwer verständlich oder nicht aktuell. EmigrateIn löst das Problem der **Informationsüberflutung und der organisatorischen Unsicherheit**, indem es alle relevanten Schritte und Infos klar aufbereitet und in handhabbare Aufgaben unterteilt.
+Die Auswanderung, besonders mit Familie, ist mit zahlreichen bürokratischen Hürden, Informationslücken und organisatorischem Aufwand verbunden. Informationen sind oft verstreut, veraltet oder nicht spezifisch auf die Bedürfnisse von Familien zugeschnitten.
+
+## Lösungsansatz (MVP)
+
+Die App bündelt relevante, recherchierte Informationen und interaktive Checklisten für die kritischen Phasen der Vorbereitung in Deutschland und der Ankunft in Südzypern. Sie nutzt Firebase als Backend und integriert eine externe API zur Anzeige relevanter Kontaktdaten.
 
 ## Was macht die App anders/besser?
 
@@ -58,18 +62,10 @@ Im Gegensatz zu allgemeinen Foren oder Webseiten, konzentriert sich EmigrateIn *
 #### Projektaufbau
 Eine kurze Beschreibung deiner Ordnerstruktur und Architektur (MVVM, Repositories) um Außenstehenden zu helfen, sich in deinem Projekt zurecht zu finden.
 
-#### Datenspeicherung
-Welche Daten speicherst du? Wo und wie (Firebase, Core Data)? Erkläre hier auch, warum du den jeweiligen Dienst nutzt (offline-first, Sync usw.).
-
-#### API Calls
-Welche APIs verwendest du?
-
 #### 3rd-Party Frameworks
 Verwendest du Frameworks, die nicht von dir stammen? Bspw. Swift Packages für Firebase, fertige SwiftUI-Views o.Ä.? Gib diese hier an.
 
-## Projektbeschreibung & Ausblick
-
-EmigrateIn ist eine native iOS-App, die als Minimum Viable Product (MVP) im Rahmen des **Abschlussprojekts Modul 3 - App-Entwicklung iOS - am Syntax Institut** entwickelt wird.
+## Ausblick
 
 ### Geplante zukünftige Erweiterungen
 
