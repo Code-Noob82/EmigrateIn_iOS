@@ -43,6 +43,7 @@ Im Gegensatz zu allgemeinen Foren oder Webseiten, konzentriert sich EmigrateIn *
 ## Design
 
 <p>
+  <img src="./img/Splash Screen.png" width="200">
   <img src="./img/GetStarted.png" width="200">
 </p>
 
