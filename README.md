@@ -91,7 +91,7 @@ Diese App nutzt externe Bibliotheken, die über den **Swift Package Manager (SPM
   - **Zweck:** Dient als Backend-as-a-Service (BaaS).
   - **Verwendete Module (Beispiele):**
     - `FirebaseFirestore`: Für den Zugriff auf die NoSQL-Dokumentendatenbank Firestore *(Speicherung von Infos, Checklisten)*.
-    - `FirebaseFirestoreSwift`: Bietet Codable-Unterstützung für Firestore, um Daten einfach in Swift-Strukturen zu mappen *(z.B. mit @DocumentID)*.
+    - `FirebaseFirestore`: Bietet Codable-Unterstützung für Firestore, um Daten einfach in Swift-Strukturen zu mappen *(z.B. mit @DocumentID)*.
     - `FirebaseAuth` *(optional)*: Falls Nutzerkonten für die Speicherung von Checklisten-Fortschritten implementiert werden.
 
 ## Ausblick
