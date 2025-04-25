@@ -98,13 +98,29 @@ Diese App nutzt externe Bibliotheken, die über den **Swift Package Manager (SPM
 
 ### Geplante zukünftige Erweiterungen
 
-- [ ] **Community-Features:** Forum oder Chatgruppen zum Austausch zwischen Auswanderern.
-- [ ] **Interaktiver Budgetplaner:** Detailliertes Tool zur Finanzplanung.
-- [ ] **Verzeichnisse:** Listen mit geprüften Kontakten (Ärzte, Anwälte, Makler, Übersetzer etc.).
-- [ ] **Erweiterte Inhalte:** Detailliertere Infos zu "Arbeiten als Angestellter", Firmengründung, Steuern etc.
-- [ ] **Zusätzliche Tools:** Basis-Vokabeltrainer (Griechisch), "Fakten über Zypern".
-- [ ] **Weitere Länder:** Ausweitung der Inhalte auf andere beliebte Auswanderungsziele.
-- [ ] **Erweiterte Nutzerprofile & Anbieter-Plattform:** Möglichkeit für erfahrene Expats, Dienste anzubieten.
+- [ ] **Community & Austausch:**
+ - Ziel: Schaffung einer Plattform, auf der sich auswandernde und bereits ausgewanderte Familien vernetzen, Fragen stellen und Erfahrungen austauschen können.
+ - Features: Integriertes Forum (nach Themen/Regionen sortiert), private Chat-Funktionen, Möglichkeit zur Erstellung von Nutzerprofilen.
+- [ ] **Interaktiver Budgetplaner:**
+ - Ziel: Familien ein Werkzeug an die Hand geben, um die Kosten der Auswanderung und des Lebens im Ausland detailliert zu planen und zu verfolgen.
+ - Features: Eingabe von Einnahmen/Ausgaben, vordefinierte Kostenkategorien mit Schätzwerten für Zypern (später auch andere Länder), Vergleich Plan vs. IST, Währungsumrechner (falls nicht schon im MVP).
+- [ ] **Detaillierte Verzeichnisse & Empfehlungen:**
+ - Ziel: Nutzern den Zugang zu geprüften, lokalen Dienstleistern und wichtigen Kontakten erleichtern.
+ - Features: Durchsuchbare Verzeichnisse für Ärzte (filterbar nach Sprache/GESY), Anwälte (mit Spezialisierung), Steuerberater, Immobilienmakler, Übersetzer, internationale Schulen etc. – potenziell mit Nutzerbewertungen.
+- [ ] **Erweiterte Inhalte & Themen:**
+ - Ziel: Die Informationsbasis über die Ankunftsphase hinaus erweitern.
+ - Features: Detaillierte Abschnitte zu "Arbeiten als Angestellter" (Jobsuche, Gehälter, Arbeitskultur), Firmengründung (Ltd.), Steuersystem (Non-Dom etc.), weiterführende Bildung, kulturelle Integration, Freizeitgestaltung für Familien.
+- [ ] **Nützliche Tools & Alltagshelfer:**
+ - Ziel: Kleine Helfer für den Alltag im neuen Land integrieren.
+ - Features: Basis-Vokabeltrainer (Griechisch), "Fakten über Zypern", Feiertagskalender, integrierte Suchfunktion innerhalb der App-Inhalte.
+- [ ] **Expansion auf weitere Länder:**
+ - Ziel: Die App für Auswanderer in andere beliebte Zielländer verfügbar machen.
+ - Features: Schrittweise Ergänzung der Inhalte (Infos, Checklisten, Verzeichnisse) für weitere Länder, beginnend mit europäischen Zielen.
+- [ ] **(Langfristige Vision) Plattform für Dienstleistungen:**
+ - Ziel: Eine Brücke zwischen Auswanderungswilligen und erfahrenen Expats oder professionellen Dienstleistern schaffen.
+ - Features: Möglichkeit für geprüfte Anbieter, ihre Unterstützungsleistungen (Beratung, Behördenhilfe etc.) auf der Plattform anzubieten (ggf. mit Buchungs-/Zahlungsfunktion).
+
+Dieser Ausblick zeigt die geplante Entwicklung von einer fokussierten Starthilfe zu einer umfassenden Ressource und Community für auswandernde Familien. Die Priorisierung dieser Features wird sich am Nutzerfeedback und den verfügbaren Ressourcen orientieren.
 
 ## Autor
 
