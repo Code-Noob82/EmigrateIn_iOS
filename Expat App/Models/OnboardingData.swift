@@ -21,13 +21,13 @@ struct OnboardingData: Identifiable {
 let onboardingSteps: [OnboardingData] = [
     OnboardingData(imageName: "figure.wave.circle.fill",
                    headline: "Willkommen bei EmigrateIn!",
-                   bodyText: "Euer Begleiter für den Familienstart im Ausland. Wir machen den Umzug einfacher – Schritt für Schritt."),
+                   bodyText: "Euer Begleiter für den Familienstart im Ausland. Wir machen das Auswandern einfacher – Schritt für Schritt."),
     OnboardingData(imageName: "list.bullet.clipboard.fill",
                    headline: "Infos & Checklisten an einem Ort",
-                   bodyText: "Visa, Behörden, Wohnen, Schule – behaltet den Überblick! EmigrateIn bündelt wichtige Infos und Aufgaben für Euren Start auf Zypern."),
+                   bodyText: "Visa, Behörden, Wohnen, Schule – behaltet den Überblick! EmigrateIn bündelt wichtige Infos und Aufgaben für Euren Start im Ausland."),
     OnboardingData(imageName: "house.fill",
                    headline: "Findet Euer neues Zuhause",
-                   bodyText: "Erhaltet Tipps zur Wohnungssuche, versteht Mietverträge und erfahrt mehr über die Wohnkosten in verschiedenen Regionen Zyperns."),
+                   bodyText: "Erhaltet Tipps zur Wohnungssuche, versteht Mietverträge und erfahrt mehr über die Wohnkosten in verschiedenen Regionen."),
     OnboardingData(imageName: "checkmark.seal.fill",
                    headline: "Startet vorbereitet ins Abenteuer!",
                    bodyText: "Mit klaren Anleitungen und interaktiven Checklisten meistert Ihr die Bürokratie und die ersten Schritte mit mehr Sicherheit.")

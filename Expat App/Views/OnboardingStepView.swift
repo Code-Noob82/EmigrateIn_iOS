@@ -96,7 +96,7 @@ struct OnboardingStepView: View {
     OnboardingStepView(
         imageName: "info.circle.fill",
         headline: "Infos an einem Ort",
-        bodyText: "Visa, Behörden, Wohnen, Schule – behalte den Überblick! EmigrateIn bündelt wichtige Infos.",
+        bodyText: "Visa, Behörden, Wohnen, Schule – behaltet den Überblick! EmigrateIn bündelt alle wichtigen Infos.",
         pageIndex: 1, // Zweite Seite
         totalPages: 4  // Vier Seiten insgesamt
     )
