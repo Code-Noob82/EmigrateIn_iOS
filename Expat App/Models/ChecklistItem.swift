@@ -11,11 +11,15 @@ import FirebaseFirestore
 struct ChecklistItem: Codable, Identifiable {
     @DocumentID var id: String?
     
-    let categoryId: String
-    let text: String
-    let details: String?
-    let order: Int
+    let categoryId: String // // ID der übergeordneten Checkliste
+    let text: String // Text der Aufgabe
+    let details: String? // Optionale Details
+    let order: Int // Reihenfolge für die Anzeige
     
-    // Das Feld 'isDoneDefault' aus Firestore wird hier nicht unbedingt benötigt,
-    // da der tatsächliche Erledigt-Status pro Nutzer verwaltet wird.
+    // Hinweis für die Implementierung:
+    // Der tatsächliche 'isDone'-Status für die UI wird im ChecklistViewModel
+    // verwaltet. Dieser Status wird entweder aus 'user_checklist_states' (wenn Nutzer eingeloggt)
+    // oder aus UserDefaults (wenn offline/nicht eingeloggt) geladen und gespeichert.
+    
+    // Keine CodingKeys notwendig, da die Swift-Property-Namen den Firestore-Feldnamen entsprechen.
 }
