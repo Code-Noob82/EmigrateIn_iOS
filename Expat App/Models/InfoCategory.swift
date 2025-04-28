@@ -16,5 +16,5 @@ struct InfoCategory: Codable, Identifiable {
     let iconName: String? // Swift-Code Image(systemName: category.iconName ?? "placeholder.icon")
     let order: Int
     
-    // Keine CodingKeys nötig, da die Swift-Property-Namen den Firestore-Feldnamen entsprechen.
+    // Keine CodingKeys notwendig, da die Swift-Property-Namen den Firestore-Feldnamen entsprechen.
 }

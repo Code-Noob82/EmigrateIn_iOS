@@ -15,5 +15,5 @@ struct ChecklistCategory: Codable, Identifiable {
     let description: String?
     let order: Int
     
-     // keine CodingKeys notwendig
+    // Keine CodingKeys notwendig, da die Swift-Property-Namen den Firestore-Feldnamen entsprechen.
 }
