@@ -4,14 +4,14 @@
 //
 //  Created by Dominik Baki on 29.04.25.
 //
-
+import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
 // MARK: - AuthenticationViewModel
 // Dieses ViewModel steuert den gesamten Auth-Fluss
 // Es interagiert mit Firebase Auth und Firestore (über Services)
-
+@MainActor
 class AuthenticationViewModel: ObservableObject {
     @Published var email = ""
     @Published var password = ""
@@ -36,10 +36,6 @@ class AuthenticationViewModel: ObservableObject {
         }
         // Fügt den Listener hinzu, der auf Änderungen des Anmeldestatus reagiert
         addAuthStateListener()
-    }
-    // Wichtig in komplexeren Szenarien, um Memory Leaks zu vermeiden ("Best Practice")
-    deinit {
-        removeAuthStateListener()
     }
     
     func addAuthStateListener() {
@@ -77,7 +73,6 @@ class AuthenticationViewModel: ObservableObject {
         }
     }
     
-    @MainActor // Stellt sicher, dass UI-Updates auf dem Main Thread erfolgen
     func fetchGermanStates() async { // Markiert die Funktion als async
         // Setzt Ladezustand und löscht alte Fehler
         self.isLoading = true
@@ -105,7 +100,7 @@ class AuthenticationViewModel: ObservableObject {
                     return try document.data(as: StateSpecificInfo.self)
                 } catch {
                     print("Error decoding state document \(document.documentID): \(error.localizedDescription)")
-                    // Optional: Sammle Fehler oder logge sie spezifischer
+                    // Optional: Fehler sammeln oder spezifischer loggen
                     return nil // Überspringt dieses Dokument bei Fehler
                 }
             }
@@ -118,7 +113,6 @@ class AuthenticationViewModel: ObservableObject {
         self.isLoading = false
     }
     
-    @MainActor // Stellt sicher, dass UI-Updates auf dem Main Thread erfolgen
     func signInWithEmail() {
         isLoading = true
         errorMessage = nil
@@ -131,14 +125,11 @@ class AuthenticationViewModel: ObservableObject {
                     self.errorMessage = error.localizedDescription
                     return
                 }
-                // Erfolgreich angemeldet
-                // Prüft, ob das Nutzerprofil (insb. homeStateId) existiert/vollständig ist
-                self.checkUserProfileCompletion()
+                await self.checkUserProfileCompletion()
             }
         }
     }
     
-    @MainActor
     func signUpWithEmail() {
         guard password == confirmPassword else {
             errorMessage = "Passwörter stimmen nicht überein."
@@ -149,26 +140,23 @@ class AuthenticationViewModel: ObservableObject {
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
             Task { @MainActor in
+                // Der Task { @MainActor in ... } ist sinnvoll, da dieser
+                // Completion Handler von Firebase nicht garantiert auf dem Main Thread läuft.
                 self.isLoading = false // Setzt isLoading hier zurück
                 if let error = error {
                     self.errorMessage = error.localizedDescription
                     return
                 }
-                // Erfolgreich registriert
-                // Erstellt Basis-Profil und zeigt Bundesland-Auswahl
-                self.createInitialUserProfile { success in
-                    if success {
-                        self.showStateSelection = true
-                    } else {
-                        // Fehler beim Profil erstellen (sollte nicht passieren, aber sicherheitshalber)
-                        self.errorMessage = "Fehler beim Erstellen des Nutzerprofils."
-                    }
+                let success = await self.createInitialUserProfile()
+                if success {
+                    self.showStateSelection = true
+                } else {
+                    self.errorMessage = "Fehler beim Erstellen des Nutzerrofils."
                 }
             }
         }
     }
     
-    @MainActor
     func signInWithGoogle() {
         isLoading = true
         errorMessage = nil
@@ -184,61 +172,40 @@ class AuthenticationViewModel: ObservableObject {
     }
     
     // Hilfsfunktion zum Prüfen des Profils nach Login/Google-Sign-In
-    @MainActor
-    private func checkUserProfileCompletion() {
+    private func checkUserProfileCompletion() async {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         isLoading = true
-        // TODO: Logik zum Laden des UserProfile aus Firestore (via UserService)
-        // Beispiel:
-        db.collection("user_profiles").document(userId).getDocument { [weak self] documentSnapshot, error in
-            guard let self = self else { return }
-            Task { @MainActor in // Stelle sicher, dass UI-Updates auf dem Main Thread sind
-                self.isLoading = false // Setze isLoading hier zurück
-                
-                if let document = documentSnapshot, document.exists {
-                    // Profil existiert, versuche zu decodieren
-                    do {
-                        let profile = try document.data(as: UserProfile.self)
-                        if profile.homeStateId != nil && !profile.homeStateId!.isEmpty {
-                            // Bundesland ist vorhanden
-                            self.isAuthenticated = true // Setze finalen Auth-Status
-                            self.showStateSelection = false
-                        } else {
-                            // Bundesland fehlt, zeige Auswahl
-                            self.showStateSelection = true
-                        }
-                    } catch {
-                        // Fehler beim Decodieren oder Profil unvollständig
-                        print("Error decoding profile or profile incomplete: \(error)")
-                        self.showStateSelection = true // Zeige Auswahl zur Sicherheit
-                    }
-                } else if error != nil {
-                    // Fehler beim Laden des Profils
-                    self.errorMessage = "Fehler beim Laden des Profils: \(error!.localizedDescription)"
-                    // Evtl. trotzdem zur State Selection? Oder Fehler anzeigen?
-                    self.showStateSelection = true
+        errorMessage = nil
+        do {
+            let documentSnapshot = try await db.collection("user_profiles").document(userId).getDocument()
+            
+            if !documentSnapshot.exists {
+                let profile = try documentSnapshot.data(as: UserProfile.self)
+                if profile.homeStateId != nil && !profile.homeStateId!.isEmpty {
+                    self.isAuthenticated = true
+                    self.showStateSelection = false
                 } else {
-                    // Profil existiert nicht (sollte nach Google Sign-In/Login nicht passieren, aber sicherheitshalber)
-                    print("User profile does not exist after login/google sign-in.")
-                    // Erstellt Basis-Profil und zeigt Bundesland-Auswahl
-                    self.createInitialUserProfile { success in
-                        if success {
-                            self.showStateSelection = true
-                        } else {
-                            self.errorMessage = "Fehler beim Erstellen des Nutzerprofils."
-                        }
-                    }
+                    self.showStateSelection = true
+                }
+            } else {
+                print("User profile does not exist after login/google sign-in")
+                let success = await self.createInitialUserProfile()
+                if success {
+                    self.errorMessage = "Fehler beim Erstellen des Nutzerprofils"
                 }
             }
+        } catch {
+            print("Error checking/decoding profile: \(error)")
+            self.errorMessage = "Fehler beim Laden des Profils: \(error.localizedDescription)"
+            self.showStateSelection = true
         }
+        self.isLoading = false
     }
     
     // Hilfsfunktion zum Erstellen eines initialen Profils nach Registrierung
-    @MainActor
-    private func createInitialUserProfile(completion: @escaping (Bool) -> Void) {
+    private func createInitialUserProfile() async -> Bool {
         guard let user = Auth.auth().currentUser else {
-            completion(false)
-            return
+            return false
         }
         let profileData: [String: Any] = [
             "email": user.email ?? "",
@@ -247,22 +214,17 @@ class AuthenticationViewModel: ObservableObject {
             // displayName kann später hinzugefügt werden
         ]
         
-        db.collection("user_profiles").document(user.uid).setData(profileData) { [weak self] error in
-            Task { @MainActor in // Stellt sicher, dass UI-Updates auf dem Main Thread sind
-                guard let self = self else { return }
-                if let error = error {
-                    print("Error creating initial user profile: \(error)")
-                    self.errorMessage = "Fehler beim Speichern des Profils."
-                    completion(false)
-                } else {
-                    print("Initial user profile created.")
-                    completion(true)
-                }
-            }
+        do {
+            try await db.collection("user_profiles").document(user.uid).setData(profileData)
+            print("Initial user profile created")
+            return true
+        } catch {
+            print("Error creating initial user profile: \(error)")
+            self.errorMessage = "Fehler beim Erstellen des Profils. Bitte versuchen Sie es erneut."
+            return false
         }
     }
     
-    @MainActor
     func saveSelectedState() {
         guard let stateId = selectedStateId else {
             errorMessage = "Bitte wähle ein Bundesland aus."
@@ -274,29 +236,28 @@ class AuthenticationViewModel: ObservableObject {
         }
         isLoading = true
         errorMessage = nil
-        // UserProfile in Firestore aktualisieren
-        db.collection("user_profiles").document(userId).updateData(["homeStateId": stateId]) { [weak self] error in
-            guard let self = self else { return }
-            Task { @MainActor in // Stellt sicher, dass UI-Updates auf dem Main Thread sind
-                self.isLoading = false // Setzt isLoading hier zurück
-                if let error = error {
-                    self.errorMessage = "Fehler beim Speichern des Bundeslandes: \(error.localizedDescription)"
-                } else {
-                    // Erfolgreich gespeichert
-                    self.isAuthenticated = true // Nutzer ist jetzt vollständig authentifiziert/angemeldet
-                    self.showStateSelection = false // Sheet schließen
-                }
+        // Der Task hier ist sinnvoll, da der Completion Handler von updateData
+        // nicht garantiert auf dem Main Thread läuft.
+        
+        Task {
+            do {
+                try await db.collection("user_profiles").document(userId).updateData(["homeStateId": stateId])
+                self.isAuthenticated = true
+                self.showStateSelection = false
+            } catch {
+                self.errorMessage = "Fehler beim Speichern des Bundeslandes: \(error.localizedDescription)"
             }
+            self.isLoading = false
         }
     }
     
-    @MainActor
     func forgotPassword() {
         isLoading = true
         errorMessage = nil
         Auth.auth().sendPasswordReset(withEmail: email) { [weak self] error in
             guard let self = self else { return }
-            Task { @MainActor in // Stellt sicher, dass UI-Updates auf dem Main Thread sind
+            // Der Task { @MainActor in ... } ist weiterhin sinnvoll für den Completion Handler
+            Task { @MainActor in
                 self.isLoading = false // Setzt isLoading hier zurück
                 if let error = error {
                     self.errorMessage = error.localizedDescription
@@ -311,23 +272,18 @@ class AuthenticationViewModel: ObservableObject {
         }
     }
     
-    @MainActor
     func signOut() {
         // Entfernt den Listener *vor* dem Ausloggen, um unnötige UI-Updates zu vermeiden
         removeAuthStateListener()
         do {
             try Auth.auth().signOut()
             print("User signed out successfully.")
-            // Der Auth State Listener (falls noch aktiv) würde isAuthenticated auf false setzen.
-            // Setzt es hier zur Sicherheit auch direkt.
-            // Die UI wird durch den Listener aktualisiert, wenn er wieder hinzugefügt wird.
-            // self.isAuthenticated = false // Nicht unbedingt hier nötig
-            // self.currentAuthView = .login // Wird durch Listener gesetzt
+            // Der Auth State Listener wird den Rest erledigen, wenn er wieder hinzugefügt wird.
             // Fügt den Listener wieder hinzu, falls der Nutzer sich erneut anmeldet
             addAuthStateListener()
         } catch let signOutError as NSError {
             print("Error signing out: %@", signOutError)
-            Task { @MainActor in // Stellt sicher, dass UI-Updates auf dem Main Thread sind
+            Task { @MainActor in
                 self.errorMessage = "Fehler beim Ausloggen: \(signOutError.localizedDescription)"
                 // Fügt den Listener sicherheitshalber wieder hinzu
                 addAuthStateListener()

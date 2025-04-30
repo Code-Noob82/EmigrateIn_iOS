@@ -18,15 +18,16 @@ struct OnboardingStepView: View {
     let pageIndex: Int // Index dieser Seite (z.B. 0, 1, 2)
     let totalPages: Int // Gesamtanzahl der Seiten
     let gradientColors: [Color] = [
-        Color(red: 0.1, green: 0.55, blue: 0.55),
-        Color(red: 0.05, green: 0.45, blue: 0.45)
+        Color(red: 100/255, green: 180/255, blue: 100/255),
+        Color(red: 40/255, green: 100/255, blue: 40/255)
     ]
     
-    var backgroundGradient: LinearGradient {
-        LinearGradient(
+    var backgroundGradient: RadialGradient {
+        RadialGradient(
             gradient: Gradient(colors: gradientColors),
-            startPoint: .topTrailing,
-            endPoint: .bottomLeading
+            center: .center,
+            startRadius: 50,
+            endRadius: 600
         )
     }
     

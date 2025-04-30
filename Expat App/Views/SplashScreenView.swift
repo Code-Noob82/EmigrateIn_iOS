@@ -8,12 +8,19 @@
 import SwiftUI
 
 struct SplashScreenView: View {
-    let backgroundGradient = LinearGradient(
-        gradient: Gradient(colors: [Color(red: 0.1, green: 0.55, blue: 0.55), Color(red: 0.05, green: 0.45, blue: 0.45)]),
-        startPoint: .topTrailing, // Startpunkt oben rechts
-        endPoint: .bottomLeading // Endpunkt unten links
-    )
+    let gradientColors: [Color] = [
+        Color(red: 100/255, green: 180/255, blue: 100/255),
+        Color(red: 40/255, green: 100/255, blue: 40/255)
+    ]
     
+    var backgroundGradient: RadialGradient {
+        RadialGradient(
+            gradient: Gradient(colors: gradientColors),
+            center: .center,
+            startRadius: 50,
+            endRadius: 600
+        )
+    }
     // Definiert die spezifische Textfarbe für "Emigrate"
     let emigrateTextColor = Color(red: 0.93, green: 0.95, blue: 0.96)
     // Definiert die spezifische Textfarbe für "In" (aus FIGMA-Design RGBA: 51, 103, 73, 1)
@@ -42,7 +49,7 @@ struct SplashScreenView: View {
                 Text("Gut vorbereitet auswandern – mit EmigrateIn")
                     .font(Font.custom("SFPro", size: 15))
                     .multilineTextAlignment(.center)
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
             }
             .padding()
         }
