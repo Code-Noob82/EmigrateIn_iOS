@@ -9,7 +9,7 @@ import Foundation
 import FirebaseFirestore
 
 class InfoCategoryViewModel: ObservableObject {
-    @Published var categoties: [InfoCategory] = []
+    @Published var categories: [InfoCategory] = []
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
     
@@ -27,7 +27,7 @@ class InfoCategoryViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            self.categoties = try await repository.fetchInfoCategories()
+            self.categories = try await repository.fetchInfoCategories()
         } catch {
             self.errorMessage = "Fehler beim Laden der Kategorien: \(error.localizedDescription)"
         }

@@ -8,7 +8,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct InfoContent: Codable, Identifiable {
+struct InfoContent: Codable, Identifiable, Hashable {
     @DocumentID var id: String?
     
     let categoryId: String

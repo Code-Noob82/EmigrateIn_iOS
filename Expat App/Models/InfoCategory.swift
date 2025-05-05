@@ -8,7 +8,7 @@
 import Foundation
 import FirebaseFirestore // Enthält Codable-Support & @DocumentID via SPM - gilt für alle Models
 
-struct InfoCategory: Codable, Identifiable {
+struct InfoCategory: Codable, Identifiable, Hashable {
     @DocumentID var id: String? // Mappt die Firestore Document-ID (z.B. prep_de) automatisch
     
     let title: String
