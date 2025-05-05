@@ -74,7 +74,12 @@ class AuthenticationViewModel: ObservableObject {
     }
     
     func fetchGermanStates() async { // Markiert die Funktion als async
-        // Setzt Ladezustand und löscht alte Fehler
+        guard Auth.auth().currentUser != nil else {
+            print("fetchGermanStates skipped: No authenticated user.")
+            self.germanStates = []
+            return
+        }
+        // Nur weiter machen, wenn Nutzer angemeldet ist
         self.isLoading = true
         self.errorMessage = nil
         print("Fetching German states from Firestore...") // Debug-Ausgabe
@@ -289,5 +294,40 @@ class AuthenticationViewModel: ObservableObject {
                 addAuthStateListener()
             }
         }
+    }
+    
+    // NEUE Funktion zum Löschen des Kontos
+    func deleteAccount() async {
+        guard let user = Auth.auth().currentUser else {
+            errorMessage = "Fehler: Kein Nutzer angemeldet."
+            return
+        }
+        let userId = user.uid
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            try await db.collection("user_profiles").document(userId).delete()
+            print("User profile deleted from Firestore.")
+            
+            let checklistStateRef = db.collection("checklist_states").document(userId)
+            if (try? await checklistStateRef.getDocument())?.exists == true {
+                try await checklistStateRef.delete()
+                print("User checklist state deleted from Firestore.")
+            } else {
+                print("No ckecklist state found for user to delete.")
+            }
+            
+            try await user.delete()
+            print("Firebase Auth user deleted successfully.")
+        } catch {
+            print("Error deleting user: \(error)")
+            if let authError = error as NSError?, authError.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                errorMessage = "Sitzung abgelaufen. Bitte melde dich erneut an, um dein Konto zu löschen."
+            } else {
+                errorMessage = "Fehler beim Löschen des Kontos: \(error.localizedDescription)"
+            }
+        }
+        isLoading = false
     }
 }

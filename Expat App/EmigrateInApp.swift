@@ -10,9 +10,6 @@ import Firebase // Firebase Core importieren
 
 @main
 struct EmigrateInApp: App {
-    
-    // --- State Management ---
-    
     // ViewModel für Authentifizierung und Nutzerdaten (als StateObject für den App-Lebenszyklus)
     @StateObject var authViewModel = AuthenticationViewModel()
     
@@ -34,7 +31,7 @@ struct EmigrateInApp: App {
         WindowGroup {
             // --- Haupt-View-Logik ---
             ZStack {
-                // Zeige die passende Ansicht basierend auf dem Zustand
+                // Zeigt die passende Ansicht basierend auf dem Zustand
                 if showingSplashScreen {
                     SplashScreenView()
                         .onAppear {
@@ -58,7 +55,7 @@ struct EmigrateInApp: App {
                 } else {
                     // Nach Splash & Onboarding: Zeige die ContentView, die den Auth-Status prüft
                     ContentView()
-                        .environmentObject(authViewModel) // Übergib das ViewModel an ContentView und dessen Kinder
+                        .environmentObject(authViewModel) // Übergibt das ViewModel an ContentView und dessen Kinder
                 }
             }
         }

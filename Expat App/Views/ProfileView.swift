@@ -12,49 +12,97 @@ import SwiftUI
 struct ProfileView: View {
     // Zugriff auf das AuthenticationViewModel aus der Umgebung
     @EnvironmentObject var authViewModel: AuthenticationViewModel
-
+    
+    @State private var showingDeleteConfirmation = false
+    
+    // Zugriff auf den zentral definierten Gradienten
+    let backgroundGradient = AppStyles.backgroundGradient
+    
     var body: some View {
-        NavigationStack { // Optional: Fügt eine Navigationsleiste hinzu
-            VStack {
-                Spacer()
-
-                Text("Profil")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.bottom)
-
-                // Hier könnten später Nutzerinfos angezeigt werden
-                if !authViewModel.email.isEmpty { // Sicherer Zugriff
-                    Text("Angemeldet als: \(authViewModel.email)")
-                         .font(.callout)
-                         .foregroundColor(.gray)
-                         .padding(.bottom, 40)
-                }
-                
-                Button {
-                    // Ruft die signOut Funktion direkt im authViewModel auf
-                    authViewModel.signOut()
-                } label: {
-                    HStack {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                        Text("Ausloggen")
+        ZStack {
+            backgroundGradient
+                .ignoresSafeArea()
+            
+            NavigationStack { // Fügt eine Navigationsleiste hinzu
+                VStack (spacing: 30) {
+                    Spacer()
+                    
+                    Text("Profil")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppStyles.primaryTextColor)
+                        .padding(.bottom)
+                    
+                    // Hier könnten später Nutzerinfos angezeigt werden
+                    if !authViewModel.email.isEmpty { // Sicherer Zugriff
+                        Text("Angemeldet als: \(authViewModel.email)")
+                            .font(.callout)
+                            .foregroundColor(AppStyles.secondaryTextColor)
+                            .padding(.bottom, 20)
                     }
-                    .foregroundColor(.red)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
+                    
+                    Button {
+                        // Ruft die signOut Funktion direkt im authViewModel auf
+                        authViewModel.signOut()
+                    } label: {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                            Text("Ausloggen")
+                        }
+                        .foregroundColor(AppStyles.buttonTextColor)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Konto löschen Button
+                    Button(role: .destructive) {
+                        showingDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash.fill")
+                            Text("Konto löschen")
+                        }
+                        .foregroundColor(AppStyles.destructiveTextColor)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(AppStyles.destructiveColor)
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    
+                    Spacer()
                 }
-                .padding(.horizontal)
-
-                Spacer()
+                .background(Color.clear)
+                .navigationTitle("Profil")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarColorScheme(.dark, for: .navigationBar)
+                .alert("Konto wirklich löschen?", isPresented: $showingDeleteConfirmation) {
+                    Button("Abbrechen", role: .cancel) { }
+                    Button("Löschen", role: .destructive) {
+                        Task {
+                            await authViewModel.deleteAccount()
+                        }
+                    }
+                } message: {
+                    Text("Dieser Vorgang kann nicht rückgängig gemacht werden. Alle deine Daten werden dauerhaft gelöscht.")
+                }
+                .alert("Fehler beim Löschen", isPresented: .constant(authViewModel.errorMessage != nil && authViewModel.errorMessage!.contains("löschen")), actions:{
+                    Button("OK", role: .cancel) { authViewModel.errorMessage = nil }
+                }, message: {
+                    Text(authViewModel.errorMessage ?? "Ein unbekannter Fehler ist aufgetreten.")
+                })
             }
-            // .navigationTitle("Profil") // Optionaler Titel für die Navigationsleiste
-            // .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
 
-#Preview {
-    ProfileView()
+#Preview("ProfileView") {
+    let previewAuthViewModel = AuthenticationViewModel()
+    previewAuthViewModel.email = "test@example.com"
+    previewAuthViewModel.isAuthenticated = true
+    return ProfileView()
+        .environmentObject(previewAuthViewModel)
 }

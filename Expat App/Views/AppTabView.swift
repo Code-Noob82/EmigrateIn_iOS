@@ -30,6 +30,7 @@ struct AppTabView: View {
     }
 }
 
-#Preview {
+#Preview("AppTabView") {
     AppTabView()
+        .environmentObject(AuthenticationViewModel())
 }

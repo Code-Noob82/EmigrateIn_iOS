@@ -62,6 +62,6 @@ struct AuthenticationView: View {
     }
 }
 
-#Preview("Auth Container View") {
-    AuthenticationView() // Startet standardmäßig mit Login
+#Preview("AuthenticationView - Login") {
+    AuthenticationView() // Startet mit Login
 }
