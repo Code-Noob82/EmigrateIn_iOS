@@ -11,46 +11,54 @@ import SwiftUI
 
 struct ForgotPasswordView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
-
+    
     var body: some View {
         VStack(spacing: 20) {
-            Text("Passwort zurücksetzen").font(.largeTitle).fontWeight(.bold)
+            Text("Passwort zurücksetzen")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(AppStyles.primaryTextColor)
+            
             Text("Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen deines Passworts zu erhalten.")
                 .font(.callout)
                 .multilineTextAlignment(.center)
-
+                .foregroundColor(AppStyles.secondaryTextColor)
+                .padding(.horizontal)
+            
             TextField("E-Mail", text: $viewModel.email)
                 .keyboardType(.emailAddress)
                 .autocapitalization(.none)
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(8)
-
+            
             Button("Link senden") {
                 viewModel.forgotPassword()
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color.blue)
-            .foregroundColor(.white)
+            .background(AppStyles.buttonBackgroundColor)
+            .foregroundColor(AppStyles.buttonTextColor)
             .cornerRadius(8)
             .disabled(viewModel.isLoading)
-
+            
             Spacer()
-
+            
             Button("Zurück zum Login") {
                 viewModel.currentAuthView = .login
             }
+            .foregroundColor(AppStyles.primaryTextColor)
         }
         .padding()
+        .background(Color.clear)
         .overlay { // Zeigt Ladeindikator
             if viewModel.isLoading {
                 ProgressView()
             }
         }
-        // Optional: Füge einen Navigationstitel hinzu
-        // .navigationTitle("Passwort vergessen")
-        // .navigationBarBackButtonHidden(true) // Versteckt ggf. den Zurück-Button der NavigationStack
+        .navigationTitle("Passwort zurücksetzen")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
     }
 }
 

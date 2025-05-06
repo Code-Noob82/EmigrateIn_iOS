@@ -23,7 +23,7 @@ class ContentRepository: ContentRepositoryProtocol {
             print("Fetched \(categories.count) info categories.")
             return categories
         } catch {
-            print("Error fetching info categoies: \(error.localizedDescription)")
+            print("Error fetching info categories: \(error.localizedDescription)")
             throw error
         }
     }

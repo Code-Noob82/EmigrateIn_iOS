@@ -15,19 +15,18 @@ struct ProfileView: View {
     
     @State private var showingDeleteConfirmation = false
     
-    // Zugriff auf den zentral definierten Gradienten
     let backgroundGradient = AppStyles.backgroundGradient
     
     var body: some View {
-        ZStack {
-            backgroundGradient
-                .ignoresSafeArea()
-            
-            NavigationStack { // Fügt eine Navigationsleiste hinzu
+        NavigationStack {
+            ZStack {
+                backgroundGradient
+                    .ignoresSafeArea()
+                
                 VStack (spacing: 30) {
                     Spacer()
                     
-                    Text("Profil")
+                    Text("Nutzerkonto")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(AppStyles.primaryTextColor)
@@ -52,7 +51,7 @@ struct ProfileView: View {
                         .foregroundColor(AppStyles.buttonTextColor)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(.ultraThinMaterial)
+                        .background(AppStyles.buttonBackgroundColor)
                         .cornerRadius(10)
                     }
                     .padding(.horizontal)
@@ -75,26 +74,27 @@ struct ProfileView: View {
                     
                     Spacer()
                 }
-                .background(Color.clear)
-                .navigationTitle("Profil")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarColorScheme(.dark, for: .navigationBar)
-                .alert("Konto wirklich löschen?", isPresented: $showingDeleteConfirmation) {
-                    Button("Abbrechen", role: .cancel) { }
-                    Button("Löschen", role: .destructive) {
-                        Task {
-                            await authViewModel.deleteAccount()
-                        }
-                    }
-                } message: {
-                    Text("Dieser Vorgang kann nicht rückgängig gemacht werden. Alle deine Daten werden dauerhaft gelöscht.")
-                }
-                .alert("Fehler beim Löschen", isPresented: .constant(authViewModel.errorMessage != nil && authViewModel.errorMessage!.contains("löschen")), actions:{
-                    Button("OK", role: .cancel) { authViewModel.errorMessage = nil }
-                }, message: {
-                    Text(authViewModel.errorMessage ?? "Ein unbekannter Fehler ist aufgetreten.")
-                })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .navigationTitle("Dein Konto")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
+            .alert("Konto wirklich löschen?", isPresented: $showingDeleteConfirmation) {
+                Button("Abbrechen", role: .cancel) { }
+                Button("Löschen", role: .destructive) {
+                    Task {
+                        await authViewModel.deleteAccount()
+                    }
+                }
+            } message: {
+                Text("Dieser Vorgang kann nicht rückgängig gemacht werden. Alle deine Daten werden dauerhaft gelöscht.")
+            }
+            .alert("Fehler beim Löschen", isPresented: .constant(authViewModel.errorMessage != nil && authViewModel.errorMessage!.contains("löschen")), actions:{
+                Button("OK", role: .cancel) { authViewModel.errorMessage = nil }
+            }, message: {
+                Text(authViewModel.errorMessage ?? "Ein unbekannter Fehler ist aufgetreten.")
+            })
         }
     }
 }

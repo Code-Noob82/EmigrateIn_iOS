@@ -15,7 +15,7 @@ struct AppTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab("Start", systemImage: "house.fill", value: .home) {
-                // .environmentObject(InfoHubViewModel())
+                InfoCategoryListView()
             }
             Tab("Checklisten", systemImage: "checklist.checked", value: .checklists) {
                 // .environmentObject(ChecklistViewModel())
@@ -27,6 +27,10 @@ struct AppTabView: View {
                 ProfileView()
             }
         }
+        .background(Color.clear)
+        .toolbarBackground(.thinMaterial, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarColorScheme(.dark, for: .tabBar)
     }
 }
 

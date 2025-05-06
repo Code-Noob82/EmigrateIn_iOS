@@ -11,24 +11,11 @@ import SwiftUI
 
 // Diese View entscheidet, ob Login oder Registrierung gezeigt wird
 struct AuthenticationView: View {
-    // ViewModel wird von außen übergeben (z.B. als @StateObject in der Haupt-App-Struktur)
-    @StateObject var viewModel = AuthenticationViewModel()
-    
-    let gradientColors: [Color] = [
-        Color(red: 100/255, green: 180/255, blue: 100/255), // Helleres Grün
-        Color(red: 40/255, green: 100/255, blue: 40/255)   // Dunkleres Grün
-    ]
-    var backgroundGradient: RadialGradient {
-        RadialGradient(
-            gradient: Gradient(colors: gradientColors),
-            center: .center,
-            startRadius: 50,
-            endRadius: 600) // Passe dies ggf. an oder nutze GeometryReader
-    }
+    @EnvironmentObject var viewModel: AuthenticationViewModel
     
     var body: some View {
         ZStack {
-            backgroundGradient
+            AppStyles.backgroundGradient
                 .ignoresSafeArea()
             
             NavigationStack {
@@ -43,15 +30,18 @@ struct AuthenticationView: View {
                         ForgotPasswordView()
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
                 .background(Color.clear)
+                // .navigationTitle("Konto")
+                // .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
             }
             // Zeigt die Bundesland-Auswahl als Sheet an, wenn nötig
             .sheet(isPresented: $viewModel.showStateSelection) {
                 StateSelectionView()
             }
-            // Stellt das ViewModel für die untergeordneten Views bereit
-            .environmentObject(viewModel)
             // Zeigt Fehlermeldungen an
             .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil), actions: {
                 Button("OK", role: .cancel) { viewModel.errorMessage = nil }
@@ -63,5 +53,5 @@ struct AuthenticationView: View {
 }
 
 #Preview("AuthenticationView - Login") {
-    AuthenticationView() // Startet mit Login
+    AuthenticationView().environmentObject(AuthenticationViewModel()) // Startet mit Login
 }

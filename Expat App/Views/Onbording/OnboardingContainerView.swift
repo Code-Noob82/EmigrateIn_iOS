@@ -44,6 +44,7 @@ struct OnboardingContainerView: View {
         }
         // Verwendet den Page-Stil für die TabView (Punkte unten)
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // Versteckt die Standard-Punkte
+        .background(Color.clear)
         .ignoresSafeArea()
     }
 }

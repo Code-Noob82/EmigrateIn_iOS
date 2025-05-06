@@ -20,6 +20,8 @@ struct EmigrateInApp: App {
     // State für die Anzeige des Splash Screens
     @State private var showingSplashScreen = true
     
+    let backgroundGradient = AppStyles.backgroundGradient
+    
     // Initialisierer der App-Struktur
     init() {
         // Konfiguriert Firebase beim Start der App.
@@ -31,6 +33,8 @@ struct EmigrateInApp: App {
         WindowGroup {
             // --- Haupt-View-Logik ---
             ZStack {
+                AppStyles.backgroundGradient.ignoresSafeArea()
+                
                 // Zeigt die passende Ansicht basierend auf dem Zustand
                 if showingSplashScreen {
                     SplashScreenView()
@@ -47,7 +51,7 @@ struct EmigrateInApp: App {
                     OnboardingContainerView {
                         // Diese Aktion wird ausgeführt, wenn der "Los geht's!" Button gedrückt wird
                         withAnimation {
-                            hasCompletedOnboarding = true // Markiere Onboarding als abgeschlossen
+                            hasCompletedOnboarding = true // Markiert Onboarding als abgeschlossen
                         }
                     }
                     // Übergib das ViewModel, falls das Onboarding es benötigen sollte (aktuell nicht der Fall)
