@@ -10,57 +10,113 @@ import SwiftUI
 
 struct InfoCategoryListView: View {
     @StateObject private var viewModel = InfoCategoryViewModel()
+    let backgroundGradient = AppStyles.backgroundGradient
     
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading {
-                    ProgressView()
-                } else if let errorMessage = viewModel.errorMessage {
-                    VStack {
-                        Text("Fehler")
-                            .font(.headline)
-                        Text(errorMessage)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                        Button("Erneut versuchen") {
-                            Task { await viewModel.fetchCategories() }
+            ZStack {
+                backgroundGradient
+                    .ignoresSafeArea()
+                
+                Group {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(AppStyles.primaryTextColor)
+                        
+                    } else if let errorMessage = viewModel.errorMessage {
+                        VStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.largeTitle)
+                                .foregroundColor(AppStyles.destructiveTextColor)
+                                .padding(.bottom, 5)
+                            
+                            Text("Fehler")
+                                .font(.headline)
+                                .foregroundColor(AppStyles.primaryTextColor)
+                            
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundColor(AppStyles.secondaryTextColor)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            
+                            Button("Erneut versuchen") {
+                                Task { await viewModel.fetchCategories() }
+                            }
+                            .padding(.top)
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppStyles.buttonBackgroundColor)
                         }
-                        .padding(.top)
-                    }
-                    .padding()
-                } else if viewModel.categories.isEmpty {
-                    Text("Keine Kategorien gefunden.")
-                        .foregroundColor(.secondary)
-                } else {
-                    List {
-                        ForEach(viewModel.categories) { category in
-                            NavigationLink(value: category) {
-                                HStack {
-                                    if let iconName = category.iconName {
-                                        Image(systemName: iconName)
-                                            .foregroundColor(.accentColor)
-                                            .frame(width: 30)
-                                    }
-                                    VStack(alignment: .leading) {
-                                        Text(category.title).font(.headline)
-                                        if let subtitle = category.subtitle, !subtitle.isEmpty {
-                                            Text(subtitle).font(.caption).foregroundColor(.gray)
+                        .padding()
+                    } else if viewModel.categories.isEmpty {
+                        VStack(spacing: 8) {
+                            Image(systemName: "tray.fill")
+                                .font(.largeTitle)
+                                .foregroundColor(AppStyles.secondaryTextColor)
+                                .padding(.bottom, 5)
+                            
+                            Text("Keine Kategorien gefunden.")
+                                .foregroundColor(AppStyles.secondaryTextColor)
+                        }
+                        .padding()
+                    } else {
+                        List {
+                            ForEach(viewModel.categories) { category in
+                                NavigationLink(value: category) {
+                                    HStack {
+                                        if let iconName = category.iconName {
+                                            Image(systemName: iconName)
+                                                //.foregroundColor(AppStyles.accentColor)
+                                                .frame(width: 30)
+                                        }
+                                        VStack(alignment: .leading) {
+                                            Text(category.title)
+                                                .font(.headline)
+                                                .foregroundColor(AppStyles.primaryTextColor)
+                                            if let subtitle = category.subtitle, !subtitle.isEmpty {
+                                                Text(subtitle)
+                                                    .font(.caption)
+                                                    .foregroundColor(AppStyles.secondaryTextColor)
+                                            }
                                         }
                                     }
                                 }
+                                .listRowBackground(Color.clear)
                             }
                         }
+                        .listStyle(.plain)
+                        .background(Color.clear)
+                        .scrollContentBackground(.hidden)
                     }
-                    //.listStyle(.grouped)
                 }
+                //.background(Color.clear)
             }
-            .navigationTitle("Info Hub")
+            .navigationTitle("Info Kategorien")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(backgroundGradient, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
+            
             .navigationDestination(for: InfoCategory.self) { category in
                 InfoContentListView(category: category)
             }
+            .task {
+                if viewModel.categories.isEmpty && viewModel.errorMessage == nil {
+                    await viewModel.fetchCategories()
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task { await viewModel.fetchCategories() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(AppStyles.primaryTextColor)
+                    }
+                    .disabled(viewModel.isLoading)
+                }
+            }
         }
-        
     }
 }
 

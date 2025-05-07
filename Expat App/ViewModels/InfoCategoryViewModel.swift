@@ -6,8 +6,10 @@
 //
 
 import Foundation
+import SwiftUI
 import FirebaseFirestore
 
+@MainActor
 class InfoCategoryViewModel: ObservableObject {
     @Published var categories: [InfoCategory] = []
     @Published var isLoading = false
@@ -23,8 +25,17 @@ class InfoCategoryViewModel: ObservableObject {
     }
     
     func fetchCategories() async {
+        guard !isLoading else {
+            print("Fetch skipped: Already loading.")
+            return
+        }
+        guard categories.isEmpty else {
+            print("Fetch skipped: Categories already popuplated.")
+            return
+        }
         isLoading = true
         errorMessage = nil
+        print("Fetching Info Categories...")
         
         do {
             self.categories = try await repository.fetchInfoCategories()
