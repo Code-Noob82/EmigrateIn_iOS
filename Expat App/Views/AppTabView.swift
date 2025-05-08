@@ -12,25 +12,44 @@ struct AppTabView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel // Zugriff auf das ViewModel
     @State private var selectedTab: TabSelection = .home
     
+    let backgroundGradient = AppStyles.backgroundGradient
+    
+    init() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemBackground
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
-        TabView(selection: $selectedTab) {
-            Tab("Start", systemImage: "house.fill", value: .home) {
-                InfoCategoryListView()
+        ZStack {
+            backgroundGradient
+                .ignoresSafeArea()
+            
+            TabView(selection: $selectedTab) {
+                Tab("Start", systemImage: "house.fill", value: .home) {
+                    InfoCategoryListView().environmentObject(authViewModel)
+                }
+                Tab("Checklisten", systemImage: "checklist.checked", value: .checklists) {
+                    Text("Checklisten Inhalt")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(AppStyles.backgroundGradient)
+                    // ChecklistView()
+                }
+                Tab("Botschaft", systemImage: "building.columns.fill", value: .embassy) {
+                    Text("Botschaft Inhalt")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(AppStyles.backgroundGradient)
+                    // EmbassyInfoView()
+                }
+                Tab("Profil", systemImage: "person.crop.circle.fill", value: .profile) {
+                    ProfileView().environmentObject(authViewModel)
+                }
             }
-            Tab("Checklisten", systemImage: "checklist.checked", value: .checklists) {
-                // .environmentObject(ChecklistViewModel())
-            }
-            Tab("Botschaft", systemImage: "building.columns.fill", value: .embassy) {
-                // .environmentObject(EmbassyInfoViewModel())
-            }
-            Tab("Profil", systemImage: "person.crop.circle.fill", value: .profile) {
-                ProfileView()
-            }
+            .toolbarColorScheme(.light, for: .tabBar)
         }
-        .background(Color.clear)
-        .toolbarBackground(.thinMaterial, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
-        .toolbarColorScheme(.dark, for: .tabBar)
     }
 }
 
