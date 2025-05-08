@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import GoogleSignInSwift
 
 // MARK: - Login View
 
 struct LoginView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
-
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Anmelden")
@@ -25,12 +26,14 @@ struct LoginView: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(8)
-
+            // .tint(AppStyles.accentColor)
+            
             SecureField("Passwort", text: $viewModel.password)
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(8)
-
+            // .tint(AppStyles.accentColor)
+            
             Button("Anmelden") {
                 viewModel.signInWithEmail()
             }
@@ -41,34 +44,46 @@ struct LoginView: View {
             .clipShape(Capsule())
             .disabled(viewModel.isLoading) // Deaktivieren während Laden
             
-             Button("Passwort vergessen?") {
-                 viewModel.currentAuthView = .forgotPassword
-             }
-             .font(.footnote)
-             .foregroundColor(AppStyles.primaryTextColor)
-             .padding(.top, 5)
+            Button("Passwort vergessen?") {
+                viewModel.currentAuthView = .forgotPassword
+            }
+            .font(.footnote)
+            .foregroundColor(AppStyles.primaryTextColor)
+            .padding(.top, 5)
             
             Divider().padding(.vertical, 10)
             
             Button("Mit Google anmelden") {
-                 viewModel.signInWithGoogle()
+                Task {
+                    await viewModel.signInWithGoogle()
+                }
             }
-            // TODO: Google Sign-In Button Styling hinzufügen
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color(.systemGray5))
-            .foregroundColor(Color.primary)
-            .cornerRadius(8)
+            //.colorScheme(.light)
+            .frame(height: 44)
+            .padding(.horizontal)
             .disabled(viewModel.isLoading)
-
+            
+            Button {
+                Task {
+                    await viewModel.signInAnonymously()
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "person.crop.circle.badge.questionmark")
+                    Text("Als Gast fortfahren")
+                }
+                .foregroundColor(AppStyles.secondaryTextColor)
+            }
+            .padding(.top, 10)
+            .disabled(viewModel.isLoading)
             Spacer()
-
             HStack {
                 Text("Noch kein Konto?")
                     .foregroundColor(AppStyles.secondaryTextColor)
                 Button("Registrieren") {
                     viewModel.currentAuthView = .registration
                 }
+                .foregroundColor(AppStyles.primaryTextColor)
             }
         }
         .padding()
@@ -76,6 +91,7 @@ struct LoginView: View {
         .overlay { // Zeigt Ladeindikator
             if viewModel.isLoading {
                 ProgressView()
+                    .tint(AppStyles.primaryTextColor)
             }
         }
         .navigationTitle("Anmelden")
@@ -85,6 +101,9 @@ struct LoginView: View {
 }
 
 #Preview("Login View") {
-    LoginView()
-        .environmentObject(AuthenticationViewModel())
+    ZStack {
+        AppStyles.backgroundGradient.ignoresSafeArea()
+        LoginView()
+            .environmentObject(AuthenticationViewModel())
+    }
 }

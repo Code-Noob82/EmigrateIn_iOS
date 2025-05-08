@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Firebase // Firebase Core importieren
+import GoogleSignIn
 
 @main
 struct EmigrateInApp: App {
@@ -61,6 +62,12 @@ struct EmigrateInApp: App {
                     ContentView()
                         .environmentObject(authViewModel) // Übergibt das ViewModel an ContentView und dessen Kinder
                 }
+            }
+            .onOpenURL { incomingURL in
+                // Diese Funktion wird aufgerufen, wenn die App über ein URL Scheme geöffnet wird.
+                print("App wurde mit URL geöffnet: \(incomingURL)") // Debug-Ausgabe
+                // Leite die URL an das Google Sign-In SDK weiter, damit es den Login abschließen kann.
+                GIDSignIn.sharedInstance.handle(incomingURL)
             }
         }
     }

@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import GoogleSignInSwift
 
 // MARK: - Registration View
 
 struct RegistrationView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
-
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Registrieren")
@@ -45,22 +46,21 @@ struct RegistrationView: View {
             .foregroundColor(AppStyles.buttonTextColor)
             .cornerRadius(8)
             .disabled(viewModel.isLoading)
-
+            
             Divider().padding(.vertical, 10)
-
+            
             Button("Mit Google anmelden") {
-                 viewModel.signInWithGoogle()
+                Task {
+                    await viewModel.signInWithGoogle()
+                }
             }
-            // TODO: Google Sign-In Button Styling hinzufügen
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color(.systemGray5))
-            .foregroundColor(Color.primary)
-            .cornerRadius(8)
+            //.colorScheme(.light)
+            .frame(height: 44)
+            .padding(.horizontal)
             .disabled(viewModel.isLoading)
-
+            
             Spacer()
-
+            
             HStack {
                 Text("Bereits ein Konto?")
                     .foregroundColor(AppStyles.secondaryTextColor)
@@ -84,6 +84,9 @@ struct RegistrationView: View {
 }
 
 #Preview("Registration View") {
-    RegistrationView()
-        .environmentObject(AuthenticationViewModel())
+    ZStack {
+        AppStyles.backgroundGradient.ignoresSafeArea()
+        RegistrationView()
+            .environmentObject(AuthenticationViewModel())
+    }
 }

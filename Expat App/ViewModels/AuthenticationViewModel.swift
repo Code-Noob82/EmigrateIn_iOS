@@ -57,6 +57,11 @@ class AuthenticationViewModel: ObservableObject {
                     // Setzt den Status auf angemeldet
                     self.isAuthenticated = true
                     self.isAnonymousUser = user.isAnonymous
+                    self.email = user.email ?? ""
+                    self.confirmPassword = ""
+                    self.errorMessage = nil
+                    self.successMessage = "Willkomen zurück!"
+                    
                     if !user.isAnonymous {
                         await self.checkUserProfileCompletion(isNewUserHint: false)
                     } else {
@@ -67,8 +72,12 @@ class AuthenticationViewModel: ObservableObject {
                     // Setzt den Status auf nicht angemeldet
                     self.isAuthenticated = false
                     self.isAnonymousUser = false
+                    self.email = ""
+                    self.confirmPassword = ""
                     self.currentAuthView = .login // Zeigt Login-Screen, wenn ausgeloggt
                     self.showStateSelection = false // Reset state selection flag
+                    self.errorMessage = nil
+                    self.successMessage = nil
                 }
                 self.isLoading = false
             }
