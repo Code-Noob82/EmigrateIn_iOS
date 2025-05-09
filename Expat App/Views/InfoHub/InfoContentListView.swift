@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import MarkdownUI
 
 struct InfoContentListView: View {
     @StateObject private var viewModel: InfoContentViewModel
@@ -73,9 +74,12 @@ struct InfoContentListView: View {
                                     Text(contentItem.title)
                                         .font(.headline)
                                         .foregroundColor(AppStyles.primaryTextColor)
-                                    Text(String(contentItem.content.prefix(100)) + "...")
+                                    Markdown(String(contentItem.content.prefix(100)) + (contentItem.content.count > 100 ? "..." : ""))
+                                        .markdownTheme(.basic)
                                         .font(.caption)
                                         .foregroundColor(AppStyles.secondaryTextColor)
+                                        .frame(maxHeight: 70)
+                                        .clipped()
                                 }
                                 .padding(.vertical, 6)
                             }
@@ -94,7 +98,7 @@ struct InfoContentListView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
         .navigationDestination(for: InfoContent.self) { specificInfoContent in
-            // InfoContentDetailView(contentItem: specificInfoContent)
+            InfoContentDetailView(contentItem: specificInfoContent)
         }
         .task {
             if viewModel.contentItems.isEmpty && viewModel.errorMessage == nil {
