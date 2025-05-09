@@ -76,19 +76,25 @@ struct OnboardingStepView: View {
 // MARK: - Preview
 
 #Preview("Einzelner Step") {
-    // Vorschau für einen einzelnen Schritt
-    OnboardingStepView(
-        imageName: "info.circle.fill",
-        headline: "Infos an einem Ort",
-        bodyText: "Visa, Behörden, Wohnen, Schule – behaltet den Überblick! EmigrateIn bündelt alle wichtigen Infos.",
-        pageIndex: 1, // Zweite Seite
-        totalPages: 4  // Vier Seiten insgesamt
-    )
+    ZStack {
+        AppStyles.backgroundGradient.ignoresSafeArea()
+        // Vorschau für einen einzelnen Schritt
+        OnboardingStepView(
+            imageName: "info.circle.fill",
+            headline: "Infos an einem Ort",
+            bodyText: "Visa, Behörden, Wohnen, Schule – behaltet den Überblick! EmigrateIn bündelt alle wichtigen Infos.",
+            pageIndex: 1, // Zweite Seite
+            totalPages: 4  // Vier Seiten insgesamt
+        )
+    }
 }
 
 #Preview("Gesamter Flow") {
-    // Vorschau für den gesamten Onboarding-Flow
-    OnboardingContainerView(finishAction: {
-        print("Onboarding abgeschlossen!")
-    })
+    ZStack {
+        AppStyles.backgroundGradient.ignoresSafeArea()
+        // Vorschau für den gesamten Onboarding-Flow
+        OnboardingContainerView(finishAction: {
+            print("Onboarding abgeschlossen!")
+        })
+    }
 }

@@ -41,5 +41,8 @@ struct SplashScreenView: View {
 }
 
 #Preview {
-    SplashScreenView()
+    ZStack {
+        AppStyles.backgroundGradient.ignoresSafeArea()
+        SplashScreenView()
+    }
 }

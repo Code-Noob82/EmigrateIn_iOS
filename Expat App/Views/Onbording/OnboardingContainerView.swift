@@ -34,7 +34,7 @@ struct OnboardingContainerView: View {
                                 currentPage += 1
                             }
                         } else {
-                            // Letzte Seite: Führe die Abschlussaktion aus
+                            // Letzte Seite: Führt die Abschlussaktion aus
                             finishAction()
                         }
                     }

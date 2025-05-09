@@ -60,7 +60,7 @@ class AuthenticationViewModel: ObservableObject {
                     self.email = user.email ?? ""
                     self.confirmPassword = ""
                     self.errorMessage = nil
-                    self.successMessage = "Willkomen zurück!"
+                    self.successMessage = "Willkommen zurück!"
                     
                     if !user.isAnonymous {
                         await self.checkUserProfileCompletion(isNewUserHint: false)
