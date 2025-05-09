@@ -479,4 +479,27 @@ class AuthenticationViewModel: ObservableObject {
         // Fallback, wenn der Fehler kein AuthErrorCode ist oder die Konvertierung fehlschlägt
         return nsError.localizedDescription // Gibt die Standard-Fehlerbeschreibung zurück
     }
+    // Neue Funktion, um von Anonym zu Registrierung zu wechseln
+    func switchToRegistrationFromAnonymous() {
+        print("Switching to Registration from Anonymous state...")
+        // Zuerst den anonymen Nutzer abmelden
+        removeAuthStateListener() // Listener kurz entfernen, um Konflikte zu vermeiden
+        do {
+            try Auth.auth().signOut()
+            print("Anonymous user signed out for registration.")
+            self.isAuthenticated = false
+            self.isAnonymousUser = false
+            self.email = ""
+            self.password = ""
+            self.confirmPassword = ""
+            self.currentAuthView = .registration
+            addAuthStateListener()
+        } catch let signOutError {
+            print("Error signing out anonymous user before registration: \(signOutError)")
+            Task { @MainActor in
+                self.errorMessage = "Fehler beim Wechsel zur Registrierung: \(signOutError.localizedDescription)"
+            }
+            addAuthStateListener()
+        }
+    }
 }

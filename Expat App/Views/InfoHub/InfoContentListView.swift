@@ -11,6 +11,9 @@ import MarkdownUI
 
 struct InfoContentListView: View {
     @StateObject private var viewModel: InfoContentViewModel
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @State private var showRegistrationPrompt = false
+    @State private var tappedContentItem: InfoContent? = nil
     let category: InfoCategory
     let backgroundGradient = AppStyles.backgroundGradient
     
@@ -97,13 +100,59 @@ struct InfoContentListView: View {
         .toolbarBackground(backgroundGradient, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
+        // Navigation für registrierte Nutzer
         .navigationDestination(for: InfoContent.self) { specificInfoContent in
             InfoContentDetailView(contentItem: specificInfoContent)
         }
-        .task {
-            if viewModel.contentItems.isEmpty && viewModel.errorMessage == nil {
-                await viewModel.fetchContent()
+        // Alert für anonyme Nutzer
+        .alert("Registrierung erforderlich", isPresented: $showRegistrationPrompt) {
+            Button("Registrieren") {
+                Task {
+                    authViewModel.switchToRegistrationFromAnonymous()
+                }
             }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text("Um die vollständigen Details sehen zu können, registriere dich bitte oder melde dich an.")
+        }
+    }
+    
+    // Hilfsfunktion, die entscheidet, ob ein Button oder ein NavLink angezeigt wird
+    @ViewBuilder
+    private func listRow(for contentItem: InfoContent) -> some View {
+        // Prüfe, ob der Nutzer anonym ist (über das EnvironmentObject)
+        if authViewModel.isAnonymousUser {
+            // Anonym: Zeige einen Button, der den Alert auslöst
+            Button {
+                self.tappedContentItem = contentItem
+                self.showRegistrationPrompt = true // Zeigt den Alert an
+            } label: {
+                listRowContent(contentItem: contentItem)
+                    .contentShape(Rectangle()) // Macht die ganze Zeile klickbar
+            }
+            .buttonStyle(.plain) // Lässt den Button wie einen Listeneintrag aussehen
+        } else {
+            // Nicht anonym (registriert): Zeigt normalen NavigationLink
+            NavigationLink(value: contentItem) { // Löst .navigationDestination aus
+                listRowContent(contentItem: contentItem)
+            }
+        }
+    }
+    
+    // Hilfsfunktion für das einheitliche Aussehen des Zeileninhalts
+    private func listRowContent(contentItem: InfoContent) -> some View {
+        HStack { // HStack für Text und Chevron
+            VStack(alignment: .leading, spacing: 4) {
+                Text(contentItem.title)
+                    .font(.headline)
+                    .foregroundColor(AppStyles.primaryTextColor)
+            }
+            .padding(.vertical, 6)
+            Spacer() // Schiebt Chevron nach rechts
+            // Fügt das Chevron manuell hinzu, damit es auch beim Button da ist
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(.secondary.opacity(0.5))
         }
     }
 }
