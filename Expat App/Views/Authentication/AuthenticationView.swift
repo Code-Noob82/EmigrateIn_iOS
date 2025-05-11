@@ -12,10 +12,11 @@ import SwiftUI
 // Diese View entscheidet, ob Login oder Registrierung gezeigt wird
 struct AuthenticationView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
+    let backgroundGradient = AppStyles.backgroundGradient
     
     var body: some View {
         ZStack {
-            AppStyles.backgroundGradient
+            backgroundGradient
                 .ignoresSafeArea()
             
             NavigationStack {
@@ -30,12 +31,10 @@ struct AuthenticationView: View {
                         ForgotPasswordView()
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
-                .background(Color.clear)
-                // .navigationTitle("Konto")
-                // .navigationBarTitleDisplayMode(.inline)
+                .navigationTitle(titleForCurrentAuthView())
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
             }
             // Zeigt die Bundesland-Auswahl als Sheet an, wenn nötig
@@ -48,6 +47,14 @@ struct AuthenticationView: View {
             }, message: {
                 Text(viewModel.errorMessage ?? "Unbekannter Fehler")
             })
+        }
+    }
+    
+    private func titleForCurrentAuthView() -> String {
+        switch viewModel.currentAuthView {
+        case .login: return "Anmelden"
+        case .registration: return "Registrieren"
+        case .forgotPassword: return "Passwort zurücksetzen"
         }
     }
 }

@@ -29,6 +29,6 @@ let onboardingSteps: [OnboardingData] = [
                    headline: "Findet Euer neues Zuhause",
                    bodyText: "Erhaltet Tipps zur Wohnungssuche, versteht Mietverträge und erfahrt mehr über die Wohnkosten in verschiedenen Regionen."),
     OnboardingData(imageName: "checkmark.seal.fill",
-                   headline: "Startet vorbereitet ins Abenteuer!",
+                   headline: "Startet gut vorbereitet ins Abenteuer!",
                    bodyText: "Mit klaren Anleitungen und interaktiven Checklisten meistert Ihr die Bürokratie und die ersten Schritte mit mehr Sicherheit.")
 ]

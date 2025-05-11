@@ -13,50 +13,50 @@ struct ForgotPasswordView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Passwort zurücksetzen")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(AppStyles.primaryTextColor)
+        ZStack {
+            AppStyles.backgroundGradient
+                .ignoresSafeArea()
             
-            Text("Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen deines Passworts zu erhalten.")
-                .font(.callout)
-                .multilineTextAlignment(.center)
-                .foregroundColor(AppStyles.secondaryTextColor)
-                .padding(.horizontal)
-            
-            TextField("E-Mail", text: $viewModel.email)
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
+            VStack(spacing: 20) {
+                Text("Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen deines Passworts zu erhalten.")
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(AppStyles.secondaryTextColor)
+                    .padding(.horizontal)
+                
+                TextField("E-Mail", text: $viewModel.email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                
+                Button("Link senden") {
+                    viewModel.forgotPassword()
+                }
                 .padding()
-                .background(Color(.secondarySystemBackground))
+                .frame(maxWidth: .infinity)
+                .background(AppStyles.buttonBackgroundColor)
+                .foregroundColor(AppStyles.buttonTextColor)
                 .cornerRadius(8)
-            
-            Button("Link senden") {
-                viewModel.forgotPassword()
+                .disabled(viewModel.isLoading)
+                
+                Spacer()
+                
+                Button("Zurück zum Login") {
+                    viewModel.currentAuthView = .login
+                }
+                .foregroundColor(AppStyles.primaryTextColor)
             }
             .padding()
-            .frame(maxWidth: .infinity)
-            .background(AppStyles.buttonBackgroundColor)
-            .foregroundColor(AppStyles.buttonTextColor)
-            .cornerRadius(8)
-            .disabled(viewModel.isLoading)
-            
-            Spacer()
-            
-            Button("Zurück zum Login") {
-                viewModel.currentAuthView = .login
-            }
-            .foregroundColor(AppStyles.primaryTextColor)
         }
-        .padding()
-        .background(Color.clear)
         .overlay { // Zeigt Ladeindikator
             if viewModel.isLoading {
                 ProgressView()
+                    .tint(AppStyles.primaryTextColor)
             }
         }
-        .navigationTitle("Passwort zurücksetzen")
+        .navigationTitle("Dein Passwort zurücksetzen")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
     }
@@ -64,5 +64,5 @@ struct ForgotPasswordView: View {
 
 #Preview("Forgot Password View") {
     ForgotPasswordView()
-        .environmentObject(AuthenticationViewModel()) // Füge hier das EnvironmentObject hinzu
+        .environmentObject(AuthenticationViewModel())
 }

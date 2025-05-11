@@ -14,70 +14,70 @@ struct RegistrationView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Registrieren")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(AppStyles.primaryTextColor)
+        ZStack {
+            AppStyles.backgroundGradient
+                .ignoresSafeArea()
             
-            TextField("E-Mail", text: $viewModel.email)
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
+            VStack(spacing: 20) {
+                TextField("E-Mail", text: $viewModel.email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                
+                SecureField("Passwort", text: $viewModel.password)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                
+                SecureField("Passwort bestätigen", text: $viewModel.confirmPassword)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                
+                Button("Registrieren") {
+                    viewModel.signUpWithEmail()
+                }
                 .padding()
-                .background(Color(.secondarySystemBackground))
+                .frame(maxWidth: .infinity)
+                .background(AppStyles.buttonBackgroundColor)
+                .foregroundColor(AppStyles.buttonTextColor)
                 .cornerRadius(8)
-            
-            SecureField("Passwort", text: $viewModel.password)
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(8)
-            
-            SecureField("Passwort bestätigen", text: $viewModel.confirmPassword)
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(8)
-            
-            Button("Registrieren") {
-                viewModel.signUpWithEmail()
+                .disabled(viewModel.isLoading)
+                
+                Divider().padding(.vertical, 10)
+                
+                Button("Mit Google anmelden") {
+                    Task {
+                        await viewModel.signInWithGoogle()
+                    }
+                }
+                .frame(height: 44)
+                .padding(.horizontal)
+                .disabled(viewModel.isLoading)
+                
+                Spacer()
+                
+                HStack {
+                    Text("Bereits ein Konto?")
+                        .foregroundColor(AppStyles.secondaryTextColor)
+                    Button("Einloggen") {
+                        viewModel.currentAuthView = .login
+                    }
+                    .foregroundColor(AppStyles.primaryTextColor)
+                }
             }
             .padding()
-            .frame(maxWidth: .infinity)
-            .background(AppStyles.buttonBackgroundColor)
-            .foregroundColor(AppStyles.buttonTextColor)
-            .cornerRadius(8)
-            .disabled(viewModel.isLoading)
-            
-            Divider().padding(.vertical, 10)
-            
-            Button("Mit Google anmelden") {
-                Task {
-                    await viewModel.signInWithGoogle()
-                }
-            }
-            //.colorScheme(.light)
-            .frame(height: 44)
-            .padding(.horizontal)
-            .disabled(viewModel.isLoading)
-            
-            Spacer()
-            
-            HStack {
-                Text("Bereits ein Konto?")
-                    .foregroundColor(AppStyles.secondaryTextColor)
-                Button("Anmelden") {
-                    viewModel.currentAuthView = .login
-                }
-                .foregroundColor(AppStyles.primaryTextColor)
-            }
+            .background(Color.clear)
         }
-        .padding()
-        .background(Color.clear)
         .overlay { // Zeigt Ladeindikator
             if viewModel.isLoading {
                 ProgressView()
+                    .tint(AppStyles.primaryTextColor)
             }
         }
-        .navigationTitle("Registrieren")
+        .navigationTitle("Neu Registrieren")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
     }
