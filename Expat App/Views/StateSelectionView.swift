@@ -16,7 +16,7 @@ struct StateSelectionView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                Text("Wähle dein Bundesland")
+                Text("Wählt Euer Bundesland")
                     .font(.title)
                     .fontWeight(.bold)
                 Text("Diese Angabe hilft uns, euch relevante Informationen (z.B. für Behörden) anzuzeigen.")

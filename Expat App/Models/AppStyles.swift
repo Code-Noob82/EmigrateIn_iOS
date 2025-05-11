@@ -33,13 +33,14 @@ struct AppStyles {
     static let buttonTextColor = gradientColors.last ?? Color(red: 40, green: 100, blue: 40)
     static let buttonBackgroundColor = primaryTextColor // Fast weiß
     static let destructiveColor = Color(red: 200, green: 0, blue: 0) // Solides, dunkleres Rot
-    static let destructiveTextColor = Color.white
+    static let destructiveTextColor = Color(white: 0.85)
     
     // NEU: Globale Stilwerte für Buttons
-    static let commonButtonHeight: CGFloat = 50
-    static let commonButtonFont = primaryTextColor
-    static let commonButtonCornerRadius: CGFloat = commonButtonHeight / 2 // Für Kapselform
-// Alternativ: static let commonButtonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
+    static let ButtonHeight: CGFloat = 50
+    static let primaryButtonFont = primaryTextColor
+    static let secondaryButtonFont = secondaryTextColor
+    static let commonButtonCornerRadius: CGFloat = ButtonHeight / 2 // Für Kapselform
+    // Alternativ: static let commonButtonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
 }
 
 extension AppStyles {
