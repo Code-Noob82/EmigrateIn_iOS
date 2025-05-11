@@ -23,8 +23,7 @@ struct AppStyles {
             gradient: Gradient(colors: gradientColors),
             center: .center,
             startRadius: 20,
-            endRadius: UIScreen.main.bounds.width * 0.8 // Endradius, der sich etwas an die Breite anpasst
-        )
+            endRadius: UIScreen.main.bounds.width * 0.8) // Endradius, der sich etwas an die Breite anpasst
     }
 
     // Definiert die Textfarben zentral
@@ -37,20 +36,41 @@ struct AppStyles {
     
     // NEU: Globale Stilwerte für Buttons
     static let ButtonHeight: CGFloat = 50
-    static let primaryButtonFont = primaryTextColor
-    static let secondaryButtonFont = secondaryTextColor
+    static let primaryButtonFont: Font = .headline
+    static let secondaryButtonFont: Font = .subheadline
     static let commonButtonCornerRadius: CGFloat = ButtonHeight / 2 // Für Kapselform
-    // Alternativ: static let commonButtonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
+    static let ButtonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
 }
 
 extension AppStyles {
     struct PrimaryButton: ViewModifier {
         func body(content: Content) -> some View {
             content // Der Inhalt des Buttons (z.B. Text oder Label)
-                .foregroundColor(AppStyles.buttonTextColor)
-                .padding()
+                .font(AppStyles.primaryButtonFont)
+                .frame(height: AppStyles.ButtonHeight)
+                .frame(maxWidth: .infinity)
                 .background(AppStyles.buttonBackgroundColor)
-                .cornerRadius(AppStyles.commonButtonCornerRadius)
+                .foregroundColor(AppStyles.buttonTextColor)
+                //.clipShape(Capsule())
+                .cornerRadius(AppStyles.ButtonCornerRadius)
         }
+    }
+    struct SecondaryButton: ViewModifier {
+        func body(content: Content) -> some View {
+            content
+                .font(AppStyles.secondaryButtonFont)
+        }
+    }
+}
+
+extension View {
+    func primaryButtonStyle() -> some View {
+        self.modifier(AppStyles.PrimaryButton())
+    }
+}
+
+extension View {
+    func secondaryButtonStyle() -> some View {
+        self.modifier(AppStyles.SecondaryButton())
     }
 }
