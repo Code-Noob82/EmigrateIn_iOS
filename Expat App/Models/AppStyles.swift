@@ -35,11 +35,11 @@ struct AppStyles {
     static let destructiveTextColor = Color(white: 0.85)
     
     // NEU: Globale Stilwerte für Buttons
-    static let ButtonHeight: CGFloat = 50
+    static let buttonHeight: CGFloat = 50
     static let primaryButtonFont: Font = .headline
     static let secondaryButtonFont: Font = .subheadline
-    static let commonButtonCornerRadius: CGFloat = ButtonHeight / 2 // Für Kapselform
-    static let ButtonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
+    static let commonButtonCornerRadius: CGFloat = buttonHeight / 2 // Für Kapselform
+    static let buttonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
 }
 
 extension AppStyles {
@@ -47,12 +47,12 @@ extension AppStyles {
         func body(content: Content) -> some View {
             content // Der Inhalt des Buttons (z.B. Text oder Label)
                 .font(AppStyles.primaryButtonFont)
-                .frame(height: AppStyles.ButtonHeight)
+                .frame(height: AppStyles.buttonHeight)
                 .frame(maxWidth: .infinity)
                 .background(AppStyles.buttonBackgroundColor)
                 .foregroundColor(AppStyles.buttonTextColor)
                 //.clipShape(Capsule())
-                .cornerRadius(AppStyles.ButtonCornerRadius)
+                .cornerRadius(AppStyles.buttonCornerRadius)
         }
     }
     struct SecondaryButton: ViewModifier {

@@ -63,7 +63,7 @@ struct LoginView: View {
                         await viewModel.signInWithGoogle()
                     }
                 })
-                .frame(height: AppStyles.ButtonHeight)
+                .frame(height: AppStyles.buttonHeight)
                 .disabled(viewModel.isLoading)
                 
                 Button {
