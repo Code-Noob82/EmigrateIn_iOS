@@ -94,7 +94,7 @@ struct EmbassyRepresentativeInfo: Codable, Hashable {
     let address: String?
     let phone: String?
     let email: String?
-    let website: [String?]
+    let website: [String?]?
     let open: String?
     let remark: String?
     let emergencyPhone: String?

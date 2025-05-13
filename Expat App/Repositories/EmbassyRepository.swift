@@ -48,7 +48,7 @@ class EmbassyRepository: EmbassyRepositoryProtocol {
                                 address: representativeInfo.address,
                                 phone: representativeInfo.phone,
                                 email: representativeInfo.email, // Gemappt von "mail"
-                                url: representativeInfo.website.first.flatMap { $0 }, // Nimmt die erste URL aus dem Array
+                                url: representativeInfo.website?.first.flatMap { $0 }, // Nimmt die erste URL aus dem Array
                                 openingHours: representativeInfo.open,
                                 remark: representativeInfo.remark
                             )

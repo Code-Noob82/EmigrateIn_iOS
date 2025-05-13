@@ -39,10 +39,7 @@ struct AppTabView: View {
                     // ChecklistView()
                 }
                 Tab("Botschaft", systemImage: "building.columns.fill", value: .embassy) {
-                    Text("Botschaft Inhalt")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(AppStyles.backgroundGradient)
-                    // EmbassyInfoView()
+                    EmbassyInfoView()
                 }
                 Tab("Profil", systemImage: "person.crop.circle.fill", value: .profile) {
                     ProfileView().environmentObject(authViewModel)

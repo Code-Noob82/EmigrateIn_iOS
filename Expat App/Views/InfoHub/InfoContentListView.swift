@@ -158,6 +158,11 @@ struct InfoContentListView: View {
 }
 
 #Preview("Info Content List") {
-    let previewCategory = InfoCategory(id: "arrival_cy", title: "Ankunft & Erste Schritte", subtitle: "Behörden etc.", iconName: "figure.wave.circle.fill", order: 20)
+    let previewCategory = InfoCategory(
+        id: "arrival_cy",
+        title: "Ankunft & Erste Schritte",
+        subtitle: "Behörden etc.",
+        iconName: "figure.wave.circle.fill",
+        order: 20)
     InfoContentListView(category: previewCategory)
 }
