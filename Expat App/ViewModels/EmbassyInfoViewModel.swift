@@ -10,19 +10,21 @@ import SwiftUI
 
 @MainActor
 class EmbassyInfoViewModel: ObservableObject {
+    let placeholderCountryName = "Land auswählen..."
+    
     @Published var embassy: Embassy?
     @Published var isLoading = false
     @Published var errorMessage: String?
     
     // NEUE Published Properties für die Länderauswahl
     @Published var allCountryNames: [String] = []
-    @Published var selectedCountryName: String = "" // Hält das aktuell ausgewählte Land
+    @Published var selectedCountryName: String // Wird jetzt im init gesetzt
     @Published var isLoadingCountries = false // Für das Laden der Länderliste
     @Published var countryListErrorMessage: String? // Für Fehler beim Laden der Länderliste
     
     // NEUE Published Properties für die Liste aller Vertretungen
     @Published var allRepresentationsForCountry: [Embassy] = []
-    @Published var isLoadingAllRepresentations: Bool = false
+    @Published var isLoadingAllRepresentations = false
     @Published var allRepresentationsErrorMessage: String?
     
     @Published var displayContent: DisplayContent = .none
@@ -31,54 +33,61 @@ class EmbassyInfoViewModel: ObservableObject {
     
     init(repository: EmbassyRepositoryProtocol = EmbassyRepository()) {
         self.repository = repository
+        self.selectedCountryName = placeholderCountryName
     }
     // NEUE Funktion zum Laden aller Ländernamen
     func loadAllCountryNames() async {
         isLoadingCountries = true
         countryListErrorMessage = nil
-        allCountryNames = [] // Leere die Liste vor dem Neuladen
         
         do {
             let names = try await repository.fetchAllCountryNames()
             self.allCountryNames = names
             
-            // Wählt das erste Land in der Liste als Standard aus, falls die Liste nicht leer ist.
-            // Alternativ könntest du einen Platzhalter wie "Bitte Land auswählen" hinzufügen
-            // und selectedCountryName initial auf diesen Platzhalter setzen.
-            if let firstName = names.first {
-                self.selectedCountryName = firstName
-            } else {
-                // Falls keine Länder geladen wurden, selectedCountryName leer lassen oder auf Platzhalter setzen.
-                self.selectedCountryName = ""
-                self.countryListErrorMessage = "Keine Länder von der API geladen." // Informative Meldung
+            print("EmbassyInfoViewModel: Direkt nach Zuweisung hat self.allCountryNames \(self.allCountryNames.count) Einträge.")
+            print("EmbassyInfoViewModel: Die ersten 10 Länder in self.allCountryNames: \(self.allCountryNames.prefix(10))")
+            if self.allCountryNames.count > 10 { // Nur ausgeben, wenn mehr als 10 vorhanden sind
+                print("EmbassyInfoViewModel: Die letzten 10 Länder in self.allCountryNames: \(self.allCountryNames.suffix(10))")
+            }
+            
+            if names.isEmpty {
+                self.countryListErrorMessage = "Keine Länder von der API geladen."
+                self.selectedCountryName = placeholderCountryName
             }
         } catch let apiError as ApiError {
             self.countryListErrorMessage = "Fehler beim Laden der Länderliste: \(apiError.errorDescription ?? "Unbekannter Fehler")"
-            print("EmbassyInfoViewModel: ApiError loading country names - \(apiError)")
+            self.allCountryNames = [] // Leert die Liste bei Fehler
+            self.selectedCountryName = placeholderCountryName // Setzt auf Platzhalter zurück
+            print("EmbassyInfoViewModel: ApiError loading country names: \(apiError.localizedDescription)")
         } catch {
             self.countryListErrorMessage = "Ein unerwarteter Fehler ist beim Laden der Länderliste aufgetreten."
-            print("EmbassyInfoViewModel: Unexpected error loading country names - \(error.localizedDescription)")
+            self.allCountryNames = []
+            self.selectedCountryName = placeholderCountryName
+            print("EmbassyInfoViewModel: Unexpected error loading country names: \(error.localizedDescription)")
         }
         isLoadingCountries = false
     }
     
     func fetchMainEmbassyForSelectedCountry() async {
-        guard !selectedCountryName.isEmpty else {
+        guard selectedCountryName != placeholderCountryName && !selectedCountryName.isEmpty else {
             self.errorMessage = "Bitte wähle ein Land aus der Liste aus."
-            self.embassy = nil; self.allRepresentationsForCountry = []; self.displayContent = .none
+            self.embassy = nil
+            self.allRepresentationsForCountry = []
+            self.displayContent = .none
             return
         }
         isLoading = true
         errorMessage = nil
         embassy = nil
+        allRepresentationsForCountry = []
+        allRepresentationsErrorMessage = nil
         
         do {
             let fetchedEmbassy = try await repository.fetchGermanEmbassy(forCountryName: selectedCountryName)
             self.embassy = fetchedEmbassy
             self.displayContent = .singleEmbassy
-            
-            if fetchedEmbassy == nil {
-                self.errorMessage = "Keine Haupt-Botschaft fur '\(selectedCountryName)' gefunden."
+            if fetchedEmbassy == nil && self.errorMessage == nil {
+                self.errorMessage = "Keine Haupt-Botschaft für '\(selectedCountryName)' gefunden."
             }
         } catch let apiError as ApiError {
             self.errorMessage = apiError.errorDescription
@@ -94,33 +103,36 @@ class EmbassyInfoViewModel: ObservableObject {
     
     // NEUE Funktion zum Abrufen aller Vertretungen für das ausgewählte Land
     func fetchAllRepresentationsForSelectedCountry() async {
-        guard !selectedCountryName.isEmpty else {
-            self.allRepresentationsErrorMessage = "Bitte wählen ein Land aus der Liste aus."
-            self.embassy = nil; self.allRepresentationsForCountry = []; self.displayContent = .none
+        guard selectedCountryName != placeholderCountryName && !selectedCountryName.isEmpty else {
+            self.allRepresentationsErrorMessage = "Bitte wähle ein Land aus der Liste aus."
+            self.embassy = nil
+            self.allRepresentationsForCountry = []
+            self.displayContent = .none
             return
         }
         
         isLoadingAllRepresentations = true
         allRepresentationsErrorMessage = nil
         allRepresentationsForCountry = []
-        embassy = nil // Andere Ergebnisliste leeren
+        embassy = nil
+        errorMessage = nil
         
         do {
             let representations = try await repository.fetchAllRepresentationsInCountry(countryName: selectedCountryName)
             self.allRepresentationsForCountry = representations
             self.displayContent = .allRepresentationsInCountry // Modus setzen
-            if representations.isEmpty {
+            if representations.isEmpty && self.allRepresentationsErrorMessage == nil {
                 // Diese Meldung kann auch direkt in der View basierend auf der leeren Liste angezeigt werden.
                 self.allRepresentationsErrorMessage = "Keine Vertretungen für '\(selectedCountryName)' gefunden."
             }
         } catch let apiError as ApiError {
             self.allRepresentationsErrorMessage = "Fehler beim Laden aller Vertretungen: \(apiError.errorDescription ?? "Unbekannter Fehler")"
             self.displayContent = .none
-            // ... (Logging) ...
+            print("EmbassyInfoViewModel: Fetch all representations failed: \(apiError.localizedDescription)")
         } catch {
             self.allRepresentationsErrorMessage = "Ein unerwarteter Fehler ist beim Laden aller Vertretungen aufgetreten."
             self.displayContent = .none
-            // ... (Logging) ...
+            print("EmassyInfoViewModel: Fetch all representations failed: \(error.localizedDescription)")
         }
         isLoadingAllRepresentations = false
     }

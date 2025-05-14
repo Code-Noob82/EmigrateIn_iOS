@@ -52,13 +52,21 @@ struct EmbassyInfoView: View {
                             .foregroundColor(AppStyles.secondaryTextColor)
                             .padding()
                     } else {
-                        Picker("Land auswählen", selection: $viewModel.selectedCountryName) {
-                            ForEach(viewModel.allCountryNames, id: \.self) { name in
-                                Text(name)
-                                    .tag(name)
+                        Picker(
+                            viewModel.selectedCountryName, selection: $viewModel.selectedCountryName
+                        ) {
+                            Text(viewModel.placeholderCountryName).tag(viewModel.placeholderCountryName)
+                                .italic()
+                                .foregroundColor(AppStyles.secondaryTextColor.opacity(0.7))
+                            
+                            ForEach(viewModel.allCountryNames, id : \.self) { countryNameInLoop in
+                                Text(countryNameInLoop).tag(countryNameInLoop)
                                     .foregroundColor(AppStyles.primaryTextColor)
                             }
                         }
+                        .foregroundColor(viewModel.selectedCountryName ==
+                                         viewModel.placeholderCountryName ?
+                                         AppStyles.secondaryTextColor.opacity(0.7) : AppStyles.primaryTextColor)
                         .pickerStyle(.menu)
                         .padding(EdgeInsets(top: 12, leading: 15, bottom: 12, trailing: 15))
                         .background(AppStyles.primaryTextColor.opacity(0.12))
@@ -70,28 +78,42 @@ struct EmbassyInfoView: View {
                                 .stroke(AppStyles.secondaryTextColor.opacity(0.4), lineWidth: 1)
                         )
                         .padding(.horizontal)
-                        .disabled(viewModel.isLoading || viewModel.isLoadingAllRepresentations)
+                        .disabled(viewModel.isLoading ||
+                                  viewModel.isLoadingAllRepresentations ||
+                                  viewModel.isLoadingCountries
+                        )
                     }
-                    
-                    HStack(spacing: 10) {
-                        Button("Haupt-Botschaft") {
-                            Task {
-                                await viewModel.fetchMainEmbassyForSelectedCountry()
+                    if !viewModel.isLoadingCountries &&
+                        viewModel.countryListErrorMessage == nil &&
+                        !viewModel.allCountryNames.isEmpty && (
+                            viewModel.selectedCountryName !=
+                            viewModel.placeholderCountryName &&
+                            !viewModel.selectedCountryName.isEmpty) {
+                        HStack(spacing: 10) {
+                            Button("Haupt-Botschaft") {
+                                Task {
+                                    await viewModel.fetchMainEmbassyForSelectedCountry()
+                                }
                             }
-                        }
-                        .primaryButtonStyle()
-                        .disabled(viewModel.isLoadingCountries || viewModel.selectedCountryName.isEmpty || viewModel.isLoadingAllRepresentations)
-                        
-                        Button("Alle Vertretungen") {
-                            Task {
-                                await viewModel.fetchAllRepresentationsForSelectedCountry()
+                            .primaryButtonStyle()
+                            .disabled(viewModel.isLoading ||
+                                      viewModel.isLoadingAllRepresentations)
+                            
+                            Button("Alle Vertretungen") {
+                                Task {
+                                    await viewModel.fetchAllRepresentationsForSelectedCountry()
+                                }
                             }
+                            .primaryButtonStyle()
+                            .disabled(viewModel.isLoading ||
+                                      viewModel.isLoadingAllRepresentations)
                         }
-                        .primaryButtonStyle()
-                        .disabled(viewModel.isLoadingCountries || viewModel.selectedCountryName.isEmpty || viewModel.isLoading || viewModel.isLoadingAllRepresentations)
+                        .padding(.horizontal)
+                        // Optionale Animation für Ein-/Ausblenden
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        // Animieren, wenn sich die Auswahl ändert
+                        .animation(.easeInOut(duration: 0.2), value: viewModel.selectedCountryName)
                     }
-                    .padding(.horizontal)
-                    
                     Group {
                         if viewModel.isLoading || viewModel.isLoadingAllRepresentations {
                             Spacer()
@@ -138,35 +160,17 @@ struct EmbassyInfoView: View {
                                         .foregroundColor(AppStyles.secondaryTextColor)
                                     }
                                 case .none:
-                                    if !viewModel.allCountryNames.isEmpty {
-                                        Spacer()
-                                        Text("Wähle eine Suchoption Haupt-Botschaft oder Alle Vertretungen.)")
+                                    Spacer()
+                                    if viewModel.selectedCountryName == viewModel.placeholderCountryName {
+                                        Text("Wähle ein Land aus der Liste aus, \num fortzufahren.")
                                             .foregroundColor(AppStyles.secondaryTextColor)
                                             .multilineTextAlignment(.center)
                                             .padding()
-                                        Spacer()
-                                    } else if viewModel.allCountryNames.isEmpty {
-                                        Spacer()
-                                        Text("Bitte wähle zuerst ein Land aus der Liste.")
+                                    } else {
+                                        Text("Wähle eine Suchoption: \nHaupt-Botschaft oder Alle Vertretungen.")
                                             .foregroundColor(AppStyles.secondaryTextColor)
                                             .multilineTextAlignment(.center)
                                             .padding()
-                                        Spacer()
-                                    } else if viewModel.allCountryNames.isEmpty && viewModel.isLoadingCountries && viewModel.countryListErrorMessage == nil {
-                                        Spacer()
-                                        Text("Länderliste ist leer. Bitte versuche, die Liste neu zu laden.")
-                                            .foregroundColor(AppStyles.secondaryTextColor)
-                                            .multilineTextAlignment(.center)
-                                            .padding()
-                                        Spacer()
-                                    }
-                                    else {
-                                        Spacer()
-                                        Text("Länderliste wird geladen oder ist nicht verfügbar.")
-                                            .foregroundColor(AppStyles.secondaryTextColor)
-                                            .multilineTextAlignment(.center)
-                                            .padding()
-                                        Spacer()
                                     }
                                 }
                             }

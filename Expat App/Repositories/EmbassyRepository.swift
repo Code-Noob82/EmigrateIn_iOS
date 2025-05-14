@@ -174,12 +174,27 @@ class EmbassyRepository: EmbassyRepositoryProtocol {
             // Extrahiert die Ländernamen, entfernt Duplikate und sortiert sie.
             // Die API-Struktur ist apiWrapper.response.countryGroups (ein Dictionary),
             // wobei jeder Wert ein EmbassyCountryGroup-Objekt mit einer 'country'-Eigenschaft ist.
-            let countryNames = Array(Set(apiWrapper.response.countryGroups.values.map { $0.country })).sorted()
+            let allCountryGroupValues = Array(apiWrapper.response.countryGroups.values)
+            print("EmbassyRepository: DEBUG - Anzahl der Ländergruppen (countryGroup.values): \(allCountryGroupValues.count)")
+            
+            // Gibt jeden Ländernamen aus, wie er direkt aus den countryGroup-Objekten kommt
+            let initialMappedCountryNames: [String] = allCountryGroupValues.map { countryGroupObject in
+                // Wichtig: Hier sehen wir den Wert von 'countryGroupObject.country' für JEDES Objekt
+                let name = countryGroupObject.country
+                print("EmbassyRepository: DEBUG - Gemappter Ländername aus countryGroup: '\(name)' (Key des Groups: \(countryGroupObject.lastModified) - nur als Bsp., nicht der Group-Key)") // lastModified ist nur ein Feld, nicht der Key des Dictionaries
+                return name
+            }
+            print("EmbassyRepository: DEBUG - Initiale Liste aller gemappten Ländernamen (vor Set und Sortierung): \(initialMappedCountryNames)")
+            print("EmbassyRepository: DEBUG - Anzahl initial gemappter Ländernamen: \(initialMappedCountryNames.count)")
+            
+            let countryNames = Array(Set(initialMappedCountryNames)).sorted()
             
             print("EmbassyRepository: Found \(countryNames.count) unique country names.")
             if countryNames.isEmpty {
                 print("EmbassyRepository: Warning - no country names extracted from API response.")
             }
+            // Gib auch die finale Liste aus, die zurückgegeben wird
+            print("EmbassyRepository: Finale Liste (unique, sorted) die zurückgegeben wird: \(countryNames)")
             return countryNames
             
         } catch let decodingError as DecodingError {
