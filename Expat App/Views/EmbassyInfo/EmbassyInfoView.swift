@@ -55,23 +55,28 @@ struct EmbassyInfoView: View {
                         Picker(
                             viewModel.selectedCountryName, selection: $viewModel.selectedCountryName
                         ) {
-                            Text(viewModel.placeholderCountryName).tag(viewModel.placeholderCountryName)
+                            Text(viewModel.placeholderCountryName)
+                                .tag(viewModel.placeholderCountryName)
                                 .italic()
                                 .foregroundColor(AppStyles.secondaryTextColor.opacity(0.7))
+                                .lineLimit(1)
                             
                             ForEach(viewModel.allCountryNames, id : \.self) { countryNameInLoop in
-                                Text(countryNameInLoop).tag(countryNameInLoop)
+                                Text(countryNameInLoop)
+                                    .tag(countryNameInLoop)
                                     .foregroundColor(AppStyles.primaryTextColor)
+                                    .lineLimit(1)
                             }
                         }
+                        .pickerStyle(.inline)
                         .foregroundColor(viewModel.selectedCountryName ==
                                          viewModel.placeholderCountryName ?
-                                         AppStyles.secondaryTextColor.opacity(0.7) : AppStyles.primaryTextColor)
-                        .pickerStyle(.menu)
+                                         AppStyles.secondaryTextColor.opacity(0.7) : AppStyles.primaryTextColor
+                        )
+                        .lineLimit(1)
                         .padding(EdgeInsets(top: 12, leading: 15, bottom: 12, trailing: 15))
                         .background(AppStyles.primaryTextColor.opacity(0.12))
                         .accentColor(AppStyles.primaryTextColor)
-                        .foregroundColor(AppStyles.primaryTextColor)
                         .cornerRadius(AppStyles.buttonCornerRadius)
                         .overlay(
                             RoundedRectangle(cornerRadius: AppStyles.buttonCornerRadius)
@@ -162,7 +167,7 @@ struct EmbassyInfoView: View {
                                 case .none:
                                     Spacer()
                                     if viewModel.selectedCountryName == viewModel.placeholderCountryName {
-                                        Text("Wähle ein Land aus der Liste aus, \num fortzufahren.")
+                                        Text("Wähle ein Land aus der Liste, \num fortzufahren.")
                                             .foregroundColor(AppStyles.secondaryTextColor)
                                             .multilineTextAlignment(.center)
                                             .padding()
