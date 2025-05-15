@@ -120,7 +120,8 @@ struct EmbassyInfoView: View {
                         .animation(.easeInOut(duration: 0.2), value: viewModel.selectedCountryName)
                     }
                     Group {
-                        if viewModel.isLoading || viewModel.isLoadingAllRepresentations {
+                        if viewModel.isLoading ||
+                            viewModel.isLoadingAllRepresentations {
                             Spacer()
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: AppStyles.primaryTextColor))

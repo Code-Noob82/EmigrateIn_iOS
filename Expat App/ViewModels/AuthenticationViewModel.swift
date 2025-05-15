@@ -470,7 +470,6 @@ class AuthenticationViewModel: ObservableObject {
                 // TODO: Bei Update des Firebase SDK prüfen, ob neue AuthErrorCode-Fälle hinzugekommen sind.
             default:
                 // Dieser Block fängt alle anderen AuthErrorCodes ab.
-                // '@unknown' ist wichtig, damit Xcode warnt, wenn Firebase neue Fehlercodes hinzufügt.
                 print("Unhandled Firebase Auth Error Code: \(authErrorCode.rawValue)") // Hilfreich für Debugging
                 return "Ein unerwarteter Authentifizierungsfehler ist aufgetreten (Code: \(authErrorCode.rawValue))."
                 // Ende des default-Blocks
@@ -479,9 +478,9 @@ class AuthenticationViewModel: ObservableObject {
         // Fallback, wenn der Fehler kein AuthErrorCode ist oder die Konvertierung fehlschlägt
         return nsError.localizedDescription // Gibt die Standard-Fehlerbeschreibung zurück
     }
-    // Neue Funktion, um von Anonym zu Registrierung zu wechseln
+    // Neue Funktion, um von Anonym zur Registrierung zu wechseln
     func switchToRegistrationFromAnonymous() {
-        print("Switching to Registration from Anonymous state...")
+        print("Switching to Registration from Anonymous...")
         // Zuerst den anonymen Nutzer abmelden
         removeAuthStateListener() // Listener kurz entfernen, um Konflikte zu vermeiden
         do {

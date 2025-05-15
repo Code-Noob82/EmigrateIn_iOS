@@ -72,20 +72,7 @@ struct InfoContentListView: View {
                 } else {
                     List {
                         ForEach(viewModel.contentItems) { contentItem in
-                            NavigationLink(value: contentItem) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(contentItem.title)
-                                        .font(.headline)
-                                        .foregroundColor(AppStyles.primaryTextColor)
-                                    Markdown(String(contentItem.content.prefix(100)) + (contentItem.content.count > 100 ? "..." : ""))
-                                        .markdownTheme(.basic)
-                                        .font(.caption)
-                                        .foregroundColor(AppStyles.secondaryTextColor)
-                                        .frame(maxHeight: 70)
-                                        .clipped()
-                                }
-                                .padding(.vertical, 6)
-                            }
+                            listRow(for: contentItem)
                             .listRowBackground(Color.clear)
                         }
                     }
@@ -113,16 +100,16 @@ struct InfoContentListView: View {
             }
             Button("Abbrechen", role: .cancel) {}
         } message: {
-            Text("Um die vollständigen Details sehen zu können, registriere dich bitte oder melde dich an.")
+            Text("Um die vollständigen Details sehen \nzu können, registriere dich bitte oder melde dich an.")
         }
     }
     
     // Hilfsfunktion, die entscheidet, ob ein Button oder ein NavLink angezeigt wird
     @ViewBuilder
     private func listRow(for contentItem: InfoContent) -> some View {
-        // Prüfe, ob der Nutzer anonym ist (über das EnvironmentObject)
+        // Prüft, ob der Nutzer anonym ist (über das EnvironmentObject)
         if authViewModel.isAnonymousUser {
-            // Anonym: Zeige einen Button, der den Alert auslöst
+            // Anonym: Zeigt einen Button, der den Alert auslöst
             Button {
                 self.tappedContentItem = contentItem
                 self.showRegistrationPrompt = true // Zeigt den Alert an
@@ -146,6 +133,14 @@ struct InfoContentListView: View {
                 Text(contentItem.title)
                     .font(.headline)
                     .foregroundColor(AppStyles.primaryTextColor)
+                
+                Markdown(String(contentItem.content.prefix(100)) +
+                         (contentItem.content.count > 100 ? "..." : ""))
+                    .markdownTheme(.basic)
+                    .font(.caption)
+                    .foregroundColor(AppStyles.secondaryTextColor)
+                    .frame(maxHeight: 70)
+                    .clipped()
             }
             .padding(.vertical, 6)
             Spacer() // Schiebt Chevron nach rechts
