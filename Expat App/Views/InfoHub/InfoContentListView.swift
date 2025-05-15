@@ -98,7 +98,9 @@ struct InfoContentListView: View {
                     authViewModel.switchToRegistrationFromAnonymous()
                 }
             }
+            .foregroundColor(AppStyles.primaryTextColor)
             Button("Abbrechen", role: .cancel) {}
+                .foregroundColor(AppStyles.destructiveColor)
         } message: {
             Text("Um die vollständigen Details sehen \nzu können, registriere dich bitte oder melde dich an.")
         }

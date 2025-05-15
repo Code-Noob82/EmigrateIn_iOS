@@ -47,7 +47,8 @@ struct StateSelectionView: View {
                 .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(8)
-                .disabled(viewModel.selectedStateId == nil || viewModel.isLoading) // Deaktivieren, wenn nichts ausgewählt oder am Laden
+                .disabled(viewModel.selectedStateId == nil ||
+                          viewModel.isLoading) // Deaktivieren, wenn nichts ausgewählt oder am Laden
             }
             .padding()
             .navigationTitle("Profil vervollständigen")
@@ -71,5 +72,5 @@ struct StateSelectionView: View {
 
 #Preview("State Selection View") {
     StateSelectionView()
-        .environmentObject(AuthenticationViewModel()) // Braucht ein ViewModel mit Bundesländer-Daten
+        .environmentObject(AuthenticationViewModel())
 }

@@ -31,14 +31,21 @@ class AuthenticationViewModel: ObservableObject {
     @Published var isAnonymousUser = false
     @Published var successMessage: String? = nil
     
+    @Published var userProfile: UserProfile? = nil
+    
+    var homeStateName: String? {
+        guard let currentProfile = self.userProfile,
+              let homeStateId = currentProfile.homeStateId,
+              !homeStateId.isEmpty else {
+            return nil
+        }
+        return germanStates.first(where: { $0.id == homeStateId })?.stateName
+    }
+    
     private var authStateHandler: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
     
     init() {
-        // Startet das Laden der Bundesländer in einem asynchronen Task
-        Task {
-            await fetchGermanStates()
-        }
         // Fügt den Listener hinzu, der auf Änderungen des Anmeldestatus reagiert
         addAuthStateListener()
     }
@@ -60,11 +67,13 @@ class AuthenticationViewModel: ObservableObject {
                     self.email = user.email ?? ""
                     self.confirmPassword = ""
                     self.errorMessage = nil
-                    self.successMessage = "Willkommen zurück!"
+                    self.successMessage = nil
                     
                     if !user.isAnonymous {
+                        await self.fetchGermanStates()
                         await self.checkUserProfileCompletion(isNewUserHint: false)
                     } else {
+                        self.germanStates = []
                         self.showStateSelection = false
                     }
                 } else {
@@ -74,8 +83,10 @@ class AuthenticationViewModel: ObservableObject {
                     self.isAnonymousUser = false
                     self.email = ""
                     self.confirmPassword = ""
+                    self.userProfile = nil
                     self.currentAuthView = .login // Zeigt Login-Screen, wenn ausgeloggt
                     self.showStateSelection = false // Reset state selection flag
+                    self.germanStates = []
                     self.errorMessage = nil
                     self.successMessage = nil
                 }
@@ -92,12 +103,11 @@ class AuthenticationViewModel: ObservableObject {
     }
     
     func fetchGermanStates() async { // Markiert die Funktion als async
-        //        guard Auth.auth().currentUser != nil else {
-        //            print("fetchGermanStates skipped: No authenticated user.")
-        //            self.germanStates = []
-        //            return
-        //        }
-        // Nur weiter machen, wenn Nutzer angemeldet ist
+        guard Auth.auth().currentUser != nil else {
+            print("fetchGermanStates: Überspringen, da kein User angemeldet ist.")
+            self.germanStates = []
+            return
+        }
         self.isLoading = true
         self.errorMessage = nil
         print("Fetching German states from Firestore...") // Debug-Ausgabe
@@ -252,7 +262,10 @@ class AuthenticationViewModel: ObservableObject {
     
     // Wird nach erfolgreichem Email/Passwort oder Google Login aufgerufen
     private func checkUserProfileCompletion(isNewUserHint: Bool) async {
-        guard let user = Auth.auth().currentUser else { return }
+        guard let user = Auth.auth().currentUser else {
+            self.userProfile = nil
+            return
+        }
         let userId = user.uid
         
         // Falls es ein neuer User ist (z.B. von Google Sign-In, das erste Mal) oder
@@ -269,6 +282,8 @@ class AuthenticationViewModel: ObservableObject {
                 // Profil existiert bereits
                 print("Profile exists for user \(userId). Checking for homeStateId.")
                 let profile = try documentSnapshot.data(as: UserProfile.self) // Annahme: UserProfile ist Codable
+                print("DEBUG checkUserProfileCompletion: Successfully decoded profile: \(profile)") // Debug-Log hinzugefügt
+                self.userProfile = profile
                 if let homeStateId = profile.homeStateId, !homeStateId.isEmpty {
                     // Profil existiert und Bundesland ist gesetzt
                     print("homeStateId found: \(homeStateId). Profile complete.")
@@ -283,8 +298,10 @@ class AuthenticationViewModel: ObservableObject {
                 // Profil existiert NICHT. Das sollte nach einer Registrierung passieren,
                 // oder wenn ein Google-Nutzer zum ersten Mal über diese App kommt.
                 print("Profile does NOT exist for user \(userId). Creating initial profile...")
+                self.userProfile = nil
                 let success = await self.createInitialUserProfile()
                 if success {
+                    print("DEBUG checkUserProfileCompletion: Initial profile created. Setting showStateSelection = true.") // Debug-Log hinzugefügt
                     // Initialprofil erstellt, zeige Bundeslandauswahl
                     self.showStateSelection = true
                 } else {
@@ -295,12 +312,13 @@ class AuthenticationViewModel: ObservableObject {
             }
         } catch {
             print("Error checking/decoding profile for user \(userId): \(error)")
+            self.userProfile = nil
             self.errorMessage = "Fehler beim Laden/Prüfen des Profils: \(error.localizedDescription)"
-            // Fallback im Fehlerfall: Zeige dem Nutzer sicherheitshalber die Bundeslandauswahl?
-            // Oder informiere ihn nur über den Fehler? Hier zeige ich sie an.
+            // Fallback
             self.showStateSelection = true
         }
         isLoading = false // Ladezustand am Ende zurücksetzen
+        print("DEBUG checkUserProfileCompletion: Exiting. Final self.userProfile?.homeStateId = \(self.userProfile?.homeStateId ?? "nil")") // Debug-Log hinzugefügt
     }
     
     // Hilfsfunktion zum Erstellen eines initialen Profils nach Registrierung
@@ -343,10 +361,14 @@ class AuthenticationViewModel: ObservableObject {
         Task {
             do {
                 try await db.collection("user_profiles").document(userId).updateData(["homeStateId": stateId])
+                print("Bundesland erfolgreich in Firestore gespeichert.")
+                await self.checkUserProfileCompletion(isNewUserHint: false)
                 self.isAuthenticated = true
                 self.showStateSelection = false
+                print("Lokales User-Profil nach Speichern aktualisiert: homeStateId sollte jetzt \(self.userProfile?.homeStateId ?? "nil"), Name: \(self.homeStateName ?? "unbekannt") sein")
             } catch {
                 self.errorMessage = "Fehler beim Speichern des Bundeslandes: \(error.localizedDescription)"
+                self.showStateSelection = true
             }
             self.isLoading = false
         }

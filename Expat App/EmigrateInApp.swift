@@ -6,12 +6,12 @@
 //
 
 import SwiftUI
-import Firebase // Firebase Core importieren
+import Firebase
 import GoogleSignIn
 
 @main
 struct EmigrateInApp: App {
-    // ViewModel für Authentifizierung und Nutzerdaten (als StateObject für den App-Lebenszyklus)
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject var authViewModel = AuthenticationViewModel()
     
     // Speichert, ob der Nutzer das Onboarding bereits abgeschlossen hat.
@@ -25,9 +25,7 @@ struct EmigrateInApp: App {
     
     // Initialisierer der App-Struktur
     init() {
-        // Konfiguriert Firebase beim Start der App.
-        FirebaseApp.configure()
-        print("Firebase configured!") // Debug-Ausgabe
+        print("App init() aufgerufen.") // Debug-Ausgabe
     }
     
     var body: some Scene {
