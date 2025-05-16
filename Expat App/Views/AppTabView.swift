@@ -10,7 +10,6 @@ import SwiftUI
 // MARK: - AppTabView (Hauptansicht nach Login)
 struct AppTabView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel // Zugriff auf das ViewModel
-    @State private var selectedTab: TabSelection = .home
     
     let backgroundGradient = AppStyles.backgroundGradient
     
@@ -18,9 +17,12 @@ struct AppTabView: View {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor.systemBackground
+        appearance.stackedLayoutAppearance.normal.badgePositionAdjustment.horizontal = 5
         
         UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
+        if #available(iOS 16.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
     }
     
     var body: some View {
@@ -28,7 +30,7 @@ struct AppTabView: View {
             backgroundGradient
                 .ignoresSafeArea()
             
-            TabView(selection: $selectedTab) {
+            TabView(selection: $authViewModel.selectedTab) {
                 Tab("Start", systemImage: "house.fill", value: .home) {
                     InfoCategoryListView().environmentObject(authViewModel)
                 }
@@ -43,6 +45,9 @@ struct AppTabView: View {
                 }
                 Tab("Profil", systemImage: "person.crop.circle.fill", value: .profile) {
                     ProfileView().environmentObject(authViewModel)
+                }
+                Tab("Einstellungen", systemImage: "gearshape.fill", value: .settings) {
+                    SettingsView().environmentObject(authViewModel)
                 }
             }
             .toolbarColorScheme(.light, for: .tabBar)

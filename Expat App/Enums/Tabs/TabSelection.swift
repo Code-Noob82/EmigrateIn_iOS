@@ -13,4 +13,5 @@ enum TabSelection: Equatable, Hashable {
     case checklists
     case embassy
     case profile
+    case settings
 }

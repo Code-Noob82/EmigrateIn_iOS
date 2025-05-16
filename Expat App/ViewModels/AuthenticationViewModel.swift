@@ -33,6 +33,8 @@ class AuthenticationViewModel: ObservableObject {
     
     @Published var userProfile: UserProfile? = nil
     
+    @Published var selectedTab: TabSelection = .home
+    
     var homeStateName: String? {
         guard let currentProfile = self.userProfile,
               let homeStateId = currentProfile.homeStateId,
@@ -357,7 +359,6 @@ class AuthenticationViewModel: ObservableObject {
         errorMessage = nil
         // Der Task hier ist sinnvoll, da der Completion Handler von updateData
         // nicht garantiert auf dem Main Thread läuft.
-        
         Task {
             do {
                 try await db.collection("user_profiles").document(userId).updateData(["homeStateId": stateId])
@@ -523,4 +524,51 @@ class AuthenticationViewModel: ObservableObject {
             addAuthStateListener()
         }
     }
+    // Neue Funktion, um den displayName nach der Registrierung speichern zu können.
+    func updateDisplayName(newName: String) async {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            self.errorMessage = "Nutzer nicht angemeldet, um den Namen zu ändern."
+            print("DEBUG: updateDisplayName: Error - user not signed in.")
+            return
+        }
+        
+        let trimmedNewName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedNewName.isEmpty else {
+            self.errorMessage = "Anzeigename darf nicht leer sein."
+            print("DEBUG: updateDisplayName: Error - New name is empty")
+            return
+        }
+        
+        guard trimmedNewName != (self.userProfile?.displayName ?? "") else {
+            print("DEBUG: updateDisplayName: Name ist unverändert, kein Update nötig")
+            self.successMessage = "Anzeigename ist bereits aktuell."
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        successMessage = nil
+        print("DEBUG: updateDisplayName: Attempting to update displayName to: '\(trimmedNewName)' for userId: '\(userId)'")
+        
+        do {
+            try await db.collection("user_profiles").document(userId).updateData(["displayName": trimmedNewName])
+            print("DEBUG: updateDisplayName: DisplayName erfolgreich in Firestore auf '\(trimmedNewName)' aktualisiert.")
+            
+            if let user = Auth.auth().currentUser {
+                let changeRequest = user.createProfileChangeRequest()
+                changeRequest.displayName = trimmedNewName
+                try await changeRequest.commitChanges()
+                print("DEBUG: updateDisplayName: DisplayName erfolgreich im Firebase Auth User-Objekt aktualisiert.")
+            }
+            
+            await self.checkUserProfileCompletion(isNewUserHint: false)
+            print("DEBUG: updateDisplayName: Lokales UserProfile nach Update neu geladen. Neuer Name im Profil: '\(self.userProfile?.displayName ?? "nicht gesetzt")'")
+            self.successMessage = "Anzeigename erfolgreich aktualisiert."
+        } catch {
+            print("DEBUG: updateDisplayName: Fehler beim Aktualisieren des DisplayName: \(error)")
+            self.errorMessage = "Fehler beim Ändern des Anzeigenamens:: \(error.localizedDescription)"
+        }
+        isLoading = false
+    }
+    
 }
