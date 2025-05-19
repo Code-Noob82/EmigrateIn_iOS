@@ -8,7 +8,7 @@
 import SwiftUI
 import FirebaseFirestore
 
-// MARK: - Profile View (Neu)
+// MARK: - Profile View
 
 struct ProfileView: View {
     // Zugriff auf das AuthenticationViewModel aus der Umgebung
@@ -106,9 +106,7 @@ struct ProfileView: View {
                                         
                                         Button("Abbrechen") {
                                             self.isEditingDisplayName = false
-                                            // optional: editableDisplayName zurücksetzen, ist aber nicht zwingend nötig,
-                                            // da es beim nächsten Klick auf "Ändern" eh neu befüllt wird.
-                                            // self.editableDisplayName = authViewModel.userProfile?.displayName ?? ""
+                                            self.editableDisplayName = authViewModel.userProfile?.displayName ?? ""
                                         }
                                         .buttonStyle(.bordered) // Anderer Stil für Abbrechen
                                     }
@@ -251,8 +249,9 @@ struct ProfileView: View {
                             .cornerRadius(10)
                         }
                         .padding(.horizontal)
-                        
                         Spacer()
+                        
+                        
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -292,30 +291,6 @@ struct ProfileView: View {
 }
 
 #Preview("ProfileView") {
-    let previewAuthViewModel = AuthenticationViewModel()
-    previewAuthViewModel.email = "test@example.com"
-    previewAuthViewModel.isAuthenticated = true
-    previewAuthViewModel.isAnonymousUser = false // Wichtig, damit Profil-Details angezeigt werden
-    let exampleUserProfile = UserProfile(
-        id: "previewUserID", // Beispiel User ID
-        displayName: "Max Mustermann",
-        email: "test@example.com",
-        homeStateId: "BW",
-        createdAt: Timestamp(date: Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()) // z.B. vor 30 Tagen
-    )
-    previewAuthViewModel.userProfile = exampleUserProfile
-    
-    // 4. Erstelle Beispiel-Bundesländer-Daten
-    // Mindestens das Bundesland, das in `homeStateId` referenziert wird, sollte hier vorhanden sein.
-    // Annahme: Deine StateSpecificInfo Struktur hat `id` und `stateName`.
-    let exampleStates = [
-        StateSpecificInfo(id: "BW", stateName: "Baden-Württemberg" /*, ...andere Felder falls vorhanden...*/),
-        StateSpecificInfo(id: "BY", stateName: "Bayern" /*, ...*/),
-        StateSpecificInfo(id: "BE", stateName: "Berlin" /*, ...*/)
-    ]
-    previewAuthViewModel.germanStates = exampleStates
-    previewAuthViewModel.showStateSelection = true
-    
-    return ProfileView()
-        .environmentObject(previewAuthViewModel)
+    ProfileView()
+        .environmentObject(AuthenticationViewModel())
 }

@@ -12,7 +12,7 @@ import SwiftUI
 struct StateSelectionView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
     @Environment(\.dismiss) var dismiss // Zum Schließen des Sheets
-
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -23,7 +23,7 @@ struct StateSelectionView: View {
                     .font(.callout)
                     .multilineTextAlignment(.center)
                     .padding(.bottom)
-
+                
                 // Picker zur Auswahl des Bundeslandes
                 Picker("Bundesland", selection: $viewModel.selectedStateId) {
                     Text("Bitte auswählen").tag(nil as String?) // Platzhalter
@@ -33,9 +33,9 @@ struct StateSelectionView: View {
                     }
                 }
                 .pickerStyle(.wheel)
-
+                
                 Spacer()
-
+                
                 Button("Speichern & Weiter") {
                     viewModel.saveSelectedState()
                     // Das Sheet wird geschlossen, wenn isAuthenticated true wird
@@ -58,7 +58,7 @@ struct StateSelectionView: View {
                     ProgressView()
                 }
             }
-            // Optional: Füge einen Schließen-Button hinzu, falls nötig
+            // Optional: Einen Schließen-Button hinzufügen, falls nötig
              .toolbar {
                  ToolbarItem(placement: .navigationBarLeading) {
                      Button("Abbrechen") {

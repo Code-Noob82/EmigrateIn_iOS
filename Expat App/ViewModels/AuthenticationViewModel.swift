@@ -30,11 +30,13 @@ class AuthenticationViewModel: ObservableObject {
     
     @Published var isAnonymousUser = false
     @Published var successMessage: String? = nil
-    
     @Published var userProfile: UserProfile? = nil
+    @Published var selectedStateDetails: StateSpecificInfo? = nil // NEU: Für die geladenen Details des Bundeslandes
+    @Published var isLoadingStateDetails: Bool = false // NEU: Ladezustand für diese spezifische Aktion
     
     @Published var selectedTab: TabSelection = .home
     
+    // Eine homeStateName Computed Property
     var homeStateName: String? {
         guard let currentProfile = self.userProfile,
               let homeStateId = currentProfile.homeStateId,
@@ -74,6 +76,9 @@ class AuthenticationViewModel: ObservableObject {
                     if !user.isAnonymous {
                         await self.fetchGermanStates()
                         await self.checkUserProfileCompletion(isNewUserHint: false)
+                        if self.userProfile?.homeStateId != nil {
+                            await self.fetchSelectedStateDetails()
+                        }
                     } else {
                         self.germanStates = []
                         self.showStateSelection = false
@@ -364,6 +369,7 @@ class AuthenticationViewModel: ObservableObject {
                 try await db.collection("user_profiles").document(userId).updateData(["homeStateId": stateId])
                 print("Bundesland erfolgreich in Firestore gespeichert.")
                 await self.checkUserProfileCompletion(isNewUserHint: false)
+                await self.fetchSelectedStateDetails()
                 self.isAuthenticated = true
                 self.showStateSelection = false
                 print("Lokales User-Profil nach Speichern aktualisiert: homeStateId sollte jetzt \(self.userProfile?.homeStateId ?? "nil"), Name: \(self.homeStateName ?? "unbekannt") sein")
@@ -569,6 +575,38 @@ class AuthenticationViewModel: ObservableObject {
             self.errorMessage = "Fehler beim Ändern des Anzeigenamens:: \(error.localizedDescription)"
         }
         isLoading = false
+    }
+    
+    // NEUE FUNKTION: Lädt die Details für eine gegebene stateId
+    func fetchSelectedStateDetails() async {
+        guard let homeStateId = userProfile?.homeStateId, !homeStateId.isEmpty else {
+            print("DEBUG: fetchSelectedStateDetails: No homeStateId in userProfile, or userProfile is nil. Clearing details.")
+            self.selectedStateDetails = nil // Stellt sicher, dass alte Details gelöscht werden
+            return
+        }
+        
+        print("DEBUG: fetchSelectedStateDetails: Attempting to fetch details for stateId '\(homeStateId)'.")
+        self.isLoadingStateDetails = true
+        self.errorMessage = nil
+        
+        do {
+            let documentSnapshot = try await db.collection("state_specific_info").document(homeStateId).getDocument()
+            
+            if documentSnapshot.exists {
+                let details = try documentSnapshot.data(as: StateSpecificInfo.self)
+                self.selectedStateDetails = details
+                print("DEBUG: fetchSelectedStateDetails: Successfully fetched and decoded details: \(details)")
+            } else {
+                print("DEBUG: fetchSelectedStateDetails: Document for stateId '\(homeStateId)' does not exist.")
+                self.selectedStateDetails = nil
+                self.errorMessage = "Details für das ausgewählte Bundesland konnten nicht gefunden werden."
+            }
+        } catch {
+            print("DEBUG: fetchSelectedStateDetails: Error fetching state details for '\(homeStateId)': \(error)")
+            self.selectedStateDetails = nil
+            self.errorMessage = "Fehler beim Laden der Bundesland-Details: \(error.localizedDescription)"
+        }
+        self.isLoadingStateDetails = false
     }
     
 }
