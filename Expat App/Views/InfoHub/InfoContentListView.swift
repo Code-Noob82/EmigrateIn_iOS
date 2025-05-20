@@ -10,8 +10,8 @@ import SwiftUI
 import MarkdownUI
 
 struct InfoContentListView: View {
-    @StateObject private var viewModel: InfoContentViewModel
     @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @StateObject private var viewModel: InfoContentViewModel
     @State private var showRegistrationPrompt = false
     @State private var tappedContentItem: InfoContent? = nil
     let category: InfoCategory
