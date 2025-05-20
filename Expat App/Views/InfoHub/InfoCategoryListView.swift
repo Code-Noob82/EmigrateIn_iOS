@@ -9,7 +9,10 @@ import Foundation
 import SwiftUI
 
 struct InfoCategoryListView: View {
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
     @StateObject private var viewModel = InfoCategoryViewModel()
+    @State private var showRegistrationPrompt = false
+    @State private var tappedCategory: InfoCategory?
     let backgroundGradient = AppStyles.backgroundGradient
     
     var body: some View {
@@ -62,26 +65,8 @@ struct InfoCategoryListView: View {
                     } else {
                         List {
                             ForEach(viewModel.categories) { category in
-                                NavigationLink(value: category) {
-                                    HStack {
-                                        if let iconName = category.iconName {
-                                            Image(systemName: iconName)
-                                                //.foregroundColor(AppStyles.accentColor)
-                                                .frame(width: 30)
-                                        }
-                                        VStack(alignment: .leading) {
-                                            Text(category.title)
-                                                .font(.headline)
-                                                .foregroundColor(AppStyles.primaryTextColor)
-                                            if let subtitle = category.subtitle, !subtitle.isEmpty {
-                                                Text(subtitle)
-                                                    .font(.caption)
-                                                    .foregroundColor(AppStyles.secondaryTextColor)
-                                            }
-                                        }
-                                    }
-                                }
-                                .listRowBackground(Color.clear)
+                                listItem(for: category)
+                                    .listRowBackground(Color.clear)
                             }
                         }
                         .listStyle(.plain)
@@ -96,10 +81,6 @@ struct InfoCategoryListView: View {
             .toolbarBackground(backgroundGradient, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
-            
-            .navigationDestination(for: InfoCategory.self) { category in
-                InfoContentListView(category: category)
-            }
             .task {
                 if viewModel.categories.isEmpty && viewModel.errorMessage == nil {
                     await viewModel.fetchCategories()
@@ -116,10 +97,47 @@ struct InfoCategoryListView: View {
                     .disabled(viewModel.isLoading)
                 }
             }
+            .navigationDestination(for: InfoCategory.self) { selectedCategory in
+                InfoContentListView(category: selectedCategory, stateSpecificInfo: authViewModel.selectedStateDetails)
+            }
         }
+    }
+    
+    @ViewBuilder
+    private func listItem(for category: InfoCategory) -> some View {
+        // Für alle Nutzer, ob anonym oder nicht, soll die Navigation zur InfoContentListView möglich sein.
+        // Die Registrierungspflicht kommt erst bei der InfoContentDetailView.
+        NavigationLink(value: category) {
+            listItemContent(category: category)
+        }
+    }
+    
+    private func listItemContent(category: InfoCategory) -> some View {
+        HStack {
+            if let iconName = category.iconName {
+                Image(systemName: iconName)
+                    .frame(width: 30)
+            }
+            VStack(alignment: .leading) {
+                Text(category.title)
+                    .font(.headline)
+                    .foregroundColor(AppStyles.secondaryTextColor)
+                if let subtitle = category.subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(AppStyles.secondaryTextColor)
+                }
+            }
+        }
+        .padding(.vertical, 6)
+    }
+    
+    private func getInfoContent(for category: InfoCategory) -> [InfoContent]? {
+        return nil
     }
 }
 
 #Preview("Info Category List") {
     InfoCategoryListView()
+        .environmentObject(AuthenticationViewModel())
 }

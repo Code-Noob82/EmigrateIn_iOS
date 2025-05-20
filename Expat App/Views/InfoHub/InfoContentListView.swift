@@ -16,10 +16,12 @@ struct InfoContentListView: View {
     @State private var tappedContentItem: InfoContent? = nil
     let category: InfoCategory
     let backgroundGradient = AppStyles.backgroundGradient
+    let stateSpecificInfo: StateSpecificInfo?
     
-    init(category: InfoCategory) {
+    init(category: InfoCategory, stateSpecificInfo: StateSpecificInfo?) {
         self.category = category
         _viewModel = StateObject(wrappedValue: InfoContentViewModel(categoryId: category.id ?? "Fehlende_ID"))
+        self.stateSpecificInfo = stateSpecificInfo
     }
     
     var body: some View {
@@ -58,16 +60,19 @@ struct InfoContentListView: View {
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.contentItems.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "doc.text.magnifyingglass")
-                            .font(.largeTitle)
-                            .foregroundColor(AppStyles.secondaryTextColor)
-                            .padding(.bottom, 5)
-                        
-                        Text("Keine Inhalte für diese Kategorie gefunden.")
-                            .foregroundColor(AppStyles.secondaryTextColor)
+                    VStack() {
+                        if let stateInfo = stateSpecificInfo {
+                            Text("Details für \(stateInfo.stateName)")
+                                .font(.headline)
+                                .foregroundColor(AppStyles.primaryTextColor)
+                                .padding()
+                            
+                            // Hier alle weiteren Infos aus stateInfo
+                        } else {
+                            Text("Keine Inhalte für diese Kategorie gefunden.")
+                                .foregroundColor(AppStyles.secondaryTextColor)
+                        }
                     }
-                    .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List {
@@ -87,7 +92,7 @@ struct InfoContentListView: View {
         .toolbarBackground(backgroundGradient, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
-        // Navigation für registrierte Nutzer
+         // Navigation für registrierte Nutzer
         .navigationDestination(for: InfoContent.self) { specificInfoContent in
             InfoContentDetailView(contentItem: specificInfoContent)
         }
@@ -99,8 +104,10 @@ struct InfoContentListView: View {
                 }
             }
             .foregroundColor(AppStyles.primaryTextColor)
-            Button("Abbrechen", role: .cancel) {}
-                .foregroundColor(AppStyles.destructiveColor)
+            Button("Abbrechen", role: .cancel) {
+                
+            }
+            .foregroundColor(AppStyles.destructiveColor)
         } message: {
             Text("Um die vollständigen Details sehen \nzu können, registriere dich bitte oder melde dich an.")
         }
@@ -155,11 +162,19 @@ struct InfoContentListView: View {
 }
 
 #Preview("Info Content List") {
-    let previewCategory = InfoCategory(
+    let dummyCategory = InfoCategory(
         id: "arrival_cy",
         title: "Ankunft & Erste Schritte",
         subtitle: "Behörden etc.",
         iconName: "figure.wave.circle.fill",
-        order: 20)
-    InfoContentListView(category: previewCategory)
+        order: 20
+    )
+    let dummyStateInfo = StateSpecificInfo(
+        stateName: "Baden-Württemberg",
+        apostilleInfo: "Vorschau",
+        apostilleAuthorities: [],
+        order: 99
+    )
+    InfoContentListView(category: dummyCategory, stateSpecificInfo: dummyStateInfo)
+        .environmentObject(AuthenticationViewModel())
 }

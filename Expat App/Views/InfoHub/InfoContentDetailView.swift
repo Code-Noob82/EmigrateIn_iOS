@@ -36,7 +36,7 @@ struct InfoContentDetailView: View {
                     if let linkString = contentItem.officialLink, !linkString.isEmpty, let url =
                         URL(string: linkString) {
                         Divider()
-                            .overlay(AppStyles.secondaryTextColor.opacity(0.5))
+                        .overlay(AppStyles.secondaryTextColor.opacity(0.5))
                         // Link öffnet die URL im Standardbrowser
                         Link(destination: url) {
                             Label("Offizielle Quelle prüfen", systemImage: "safari.fill")
