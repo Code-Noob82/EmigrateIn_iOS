@@ -14,58 +14,96 @@ struct StateSelectionView: View {
     @Environment(\.dismiss) var dismiss // Zum Schließen des Sheets
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Wählt Euer Bundesland")
-                    .font(.title)
-                    .fontWeight(.bold)
-                Text("Diese Angabe hilft uns, euch relevante Informationen (z.B. für Behörden) anzuzeigen.")
-                    .font(.callout)
-                    .multilineTextAlignment(.center)
-                    .padding(.bottom)
-                
-                // Picker zur Auswahl des Bundeslandes
-                Picker("Bundesland", selection: $viewModel.selectedStateId) {
-                    Text("Bitte auswählen").tag(nil as String?) // Platzhalter
-                    ForEach(viewModel.germanStates) { state in
-                        // Zeigt den Namen an, speichert aber die ID (z.B. "BW")
-                        Text(state.stateName).tag(state.id as String?)
+        ZStack {
+            AppStyles.backgroundGradient
+                .ignoresSafeArea()
+            
+            NavigationStack {
+                VStack(spacing: 25) {
+                    
+                    // Hauptüberschrift
+                    Text("Wähle dein Bundesland")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppStyles.primaryTextColor)
+                        .multilineTextAlignment(.center)
+                    
+                    // Ausführlicher Hinweistext
+                    Text("Diese Angabe hilft uns, dir spezifische Informationen für Behörden, Apostillen und mehr in deinem Bundesland anzuzeigen. \nDu kannst deine Auswahl jederzeit in deinem Profil ändern.")
+                        .font(.callout)
+                        .foregroundColor(AppStyles.secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .padding(.bottom, 10)
+                    
+                    // Picker zur Auswahl des Bundeslandes
+                    Picker("Bundesland", selection: $viewModel.selectedStateId) {
+                        Text("Bitte auswählen").tag(nil as String?) // Platzhalter
+                            .foregroundColor(AppStyles.primaryTextColor)
+                        
+                        ForEach(viewModel.germanStates) { state in
+                            // Zeigt den Namen an, speichert aber die ID (z.B. "BW")
+                            Text(state.stateName).tag(state.id as String?)
+                                .foregroundColor(.black)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                    .background(
+                        RoundedRectangle(cornerRadius: 30)
+                           // .fill(Color.black.opacity(0.3))
+                            .stroke(AppStyles.primaryTextColor.opacity(0.5), lineWidth: 1)
+                    )
+                    .tint(AppStyles.primaryTextColor)
+                    
+                    Spacer()
+                    
+                    Button("Speichern & Weiter") {
+                        Task {
+                            viewModel.saveSelectedState()
+                            // Das Sheet wird automatisch geschlossen, wenn viewModel.isAuthenticated auf true wechselt
+                            // und die App-Logik dies steuert. Kein dismiss() hier, um den authViewModel Flow nicht zu stören.
+                        }
+                    }
+                    .primaryButtonStyle()
+                    .disabled(viewModel.selectedStateId == nil ||
+                              viewModel.isLoading) // Deaktivieren, wenn nichts ausgewählt oder am Laden
+                    // Zusätzliche visuelle Deaktivierung, falls der Button-Stil nicht greift
+                    .opacity(viewModel.selectedStateId == nil ||
+                             viewModel.isLoading ? 0.6 : 1.0)
+                    
+                    if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(AppStyles.destructiveColor)
+                            .font(.caption)
+                            .padding(.top, 5)
                     }
                 }
-                .pickerStyle(.wheel)
-                
-                Spacer()
-                
-                Button("Speichern & Weiter") {
-                    viewModel.saveSelectedState()
-                    // Das Sheet wird geschlossen, wenn isAuthenticated true wird
-                    // oder man könnte hier auch dismiss() aufrufen,
-                    // falls das Speichern asynchron ist und man nicht warten will.
-                }
                 .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .disabled(viewModel.selectedStateId == nil ||
-                          viewModel.isLoading) // Deaktivieren, wenn nichts ausgewählt oder am Laden
-            }
-            .padding()
-            .navigationTitle("Profil vervollständigen")
-            .navigationBarTitleDisplayMode(.inline)
-            .overlay { // Zeigt Ladeindikator
-                if viewModel.isLoading {
-                    ProgressView()
+                .background(AppStyles.backgroundGradient)
+                .cornerRadius(15)
+                .padding(.horizontal)
+                .frame(maxHeight: .infinity)
+                .navigationTitle("Profil vervollständigen")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(AppStyles.backgroundGradient, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
+                .overlay { // Zeigt Ladeindikator
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(AppStyles.primaryTextColor)
+                    }
+                }
+                // Schließen-Button in der Toolbar
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Abbrechen") {
+                            dismiss()
+                        }
+                        .foregroundColor(AppStyles.primaryTextColor)
+                    }
                 }
             }
-            // Optional: Einen Schließen-Button hinzufügen, falls nötig
-             .toolbar {
-                 ToolbarItem(placement: .navigationBarLeading) {
-                     Button("Abbrechen") {
-                         dismiss()
-                     }
-                 }
-             }
         }
     }
 }

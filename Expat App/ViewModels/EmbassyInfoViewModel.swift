@@ -10,7 +10,7 @@ import SwiftUI
 
 @MainActor
 class EmbassyInfoViewModel: ObservableObject {
-    let placeholderCountryName = "Land auswählen..."
+    let placeholderCountryName = "Standort bzw. Zielland auswählen..."
     
     @Published var embassy: Embassy?
     @Published var isLoading = false
