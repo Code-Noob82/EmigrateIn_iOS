@@ -59,7 +59,7 @@ struct ProfileView: View {
                             .padding(.horizontal)
                         }
                         
-                        if !authViewModel.isAnonymousUser {
+                        if !authViewModel.isAnonymousUser { // Nur für nicht-anonyme Nutzer relevant
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     Text("Anzeigename:")
@@ -190,7 +190,7 @@ struct ProfileView: View {
                             .padding(.horizontal)
                         }
                         
-                        if !authViewModel.isAnonymousUser { // Nur für nicht-anonyme Nutzer
+                        if !authViewModel.isAnonymousUser { // Nur für nicht-anonyme Nutzer relevant
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Dein Bundesland:")
                                     .font(.headline)
@@ -211,6 +211,21 @@ struct ProfileView: View {
                                 }
                                 .font(.callout)
                                 .padding(.top, 4)
+                                
+                                // MARK: Neuer NavigationLink zur StateDetailView
+                                NavigationLink {
+                                    StateDetailView()
+                                } label: {
+                                    Text("Details für dein Bundesland anzeigen")
+                                        .font(.callout)
+                                        .fontWeight(.medium)
+                                        .padding(.vertical, 8)
+                                        .frame(maxWidth: .infinity)
+                                        .background(AppStyles.buttonBackgroundColor.opacity(0.8))
+                                        .foregroundColor(AppStyles.buttonTextColor)
+                                        .cornerRadius(8)
+                                }
+                                .padding(.top, 10)
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -250,8 +265,6 @@ struct ProfileView: View {
                         }
                         .padding(.horizontal)
                         Spacer()
-                        
-                        
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }

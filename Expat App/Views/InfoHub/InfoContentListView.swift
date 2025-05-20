@@ -16,12 +16,12 @@ struct InfoContentListView: View {
     @State private var tappedContentItem: InfoContent? = nil
     let category: InfoCategory
     let backgroundGradient = AppStyles.backgroundGradient
-    let stateSpecificInfo: StateSpecificInfo?
+    // Wichtige Konstante: Die ID der Kategorie, welche die Bundesland-Details anzeigen soll
+    let STATE_INFO_CATEGORY_ID = "state_info_de"
     
-    init(category: InfoCategory, stateSpecificInfo: StateSpecificInfo?) {
+    init(category: InfoCategory) {
         self.category = category
         _viewModel = StateObject(wrappedValue: InfoContentViewModel(categoryId: category.id ?? "Fehlende_ID"))
-        self.stateSpecificInfo = stateSpecificInfo
     }
     
     var body: some View {
@@ -29,62 +29,62 @@ struct InfoContentListView: View {
             backgroundGradient
                 .ignoresSafeArea()
             
-            Group {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .tint(AppStyles.primaryTextColor)
+            // Nur eine der folgenden Ansichten soll angezeigt werden.
+            if category.id == STATE_INFO_CATEGORY_ID {
+                // EXKLUSIV: Wenn es die spezielle Bundesland-Kategorie ist, zeige nur die StateDetailView.
+                StateDetailView() // <-- Hier wird die StateDetailView aufgerufen!
+                    .environmentObject(authViewModel) // Wichtig für den Zugriff auf selectedStateDetails
+            } else if viewModel.isLoading {
+                // Ansonsten, wenn es eine andere Kategorie ist und lädt...
+                ProgressView()
+                    .tint(AppStyles.primaryTextColor)
+                
+            } else if let errorMessage = viewModel.errorMessage {
+                // Ansonsten, wenn es eine andere Kategorie ist und einen Fehler hat...
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.largeTitle)
+                        .foregroundColor(AppStyles.destructiveColor)
+                        .padding(.bottom, 5)
                     
-                } else if let errorMessage = viewModel.errorMessage {
-                    VStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(AppStyles.destructiveColor)
-                            .padding(.bottom, 5)
-                        
-                        Text("Fehler")
-                            .font(.headline)
-                            .foregroundColor(AppStyles.primaryTextColor)
-                        
-                        Text(errorMessage)
-                            .font(.caption)
-                            .foregroundColor(AppStyles.secondaryTextColor)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        
-                        Button("Erneut versuchen") {
-                            Task { await viewModel.fetchContent() }
-                        }
-                        .padding(.top)
-                        .buttonStyle(.borderedProminent)
+                    Text("Fehler")
+                        .font(.headline)
+                        .foregroundColor(AppStyles.primaryTextColor)
+                    
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundColor(AppStyles.secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Button("Erneut versuchen") {
+                        Task { await viewModel.fetchContent() }
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.contentItems.isEmpty {
-                    VStack() {
-                        if let stateInfo = stateSpecificInfo {
-                            Text("Details für \(stateInfo.stateName)")
-                                .font(.headline)
-                                .foregroundColor(AppStyles.primaryTextColor)
-                                .padding()
-                            
-                            // Hier alle weiteren Infos aus stateInfo
-                        } else {
-                            Text("Keine Inhalte für diese Kategorie gefunden.")
-                                .foregroundColor(AppStyles.secondaryTextColor)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(viewModel.contentItems) { contentItem in
-                            listRow(for: contentItem)
-                            .listRowBackground(Color.clear)
-                        }
-                    }
-                    .listStyle(.plain)
-                    .background(Color.clear)
-                    .scrollContentBackground(.hidden)
+                    .padding(.top)
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppStyles.buttonBackgroundColor)
                 }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+            } else if viewModel.contentItems.isEmpty {
+                VStack {
+                    Text("Keine Inhalte für diese Kategorie gefunden.")
+                        .foregroundColor(AppStyles.secondaryTextColor)
+                        .padding()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Ansonsten, wenn es eine andere Kategorie ist und Inhalte hat...
+                List {
+                    ForEach(viewModel.contentItems) { contentItem in
+                        listRow(for: contentItem)
+                            .listRowBackground(Color.clear)
+                    }
+                }
+                .listStyle(.plain)
+                .background(Color.clear)
+                .scrollContentBackground(.hidden)
             }
         }
         .navigationTitle(category.title)
@@ -92,7 +92,7 @@ struct InfoContentListView: View {
         .toolbarBackground(backgroundGradient, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
-         // Navigation für registrierte Nutzer
+        // Navigation für registrierte Nutzer
         .navigationDestination(for: InfoContent.self) { specificInfoContent in
             InfoContentDetailView(contentItem: specificInfoContent)
         }
@@ -145,11 +145,11 @@ struct InfoContentListView: View {
                 
                 Markdown(String(contentItem.content.prefix(100)) +
                          (contentItem.content.count > 100 ? "..." : ""))
-                    .markdownTheme(.basic)
-                    .font(.caption)
-                    .foregroundColor(AppStyles.secondaryTextColor)
-                    .frame(maxHeight: 70)
-                    .clipped()
+                .markdownTheme(.basic)
+                .font(.caption)
+                .foregroundColor(AppStyles.secondaryTextColor)
+                .frame(maxHeight: 70)
+                .clipped()
             }
             .padding(.vertical, 6)
             Spacer() // Schiebt Chevron nach rechts
@@ -163,18 +163,12 @@ struct InfoContentListView: View {
 
 #Preview("Info Content List") {
     let dummyCategory = InfoCategory(
-        id: "arrival_cy",
+        id: "state_info_de",
         title: "Ankunft & Erste Schritte",
         subtitle: "Behörden etc.",
         iconName: "figure.wave.circle.fill",
         order: 20
     )
-    let dummyStateInfo = StateSpecificInfo(
-        stateName: "Baden-Württemberg",
-        apostilleInfo: "Vorschau",
-        apostilleAuthorities: [],
-        order: 99
-    )
-    InfoContentListView(category: dummyCategory, stateSpecificInfo: dummyStateInfo)
+    InfoContentListView(category: dummyCategory)
         .environmentObject(AuthenticationViewModel())
 }

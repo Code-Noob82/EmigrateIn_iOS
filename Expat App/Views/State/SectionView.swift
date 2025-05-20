@@ -2,7 +2,7 @@
 //  SectionView.swift
 //  Expat App
 //
-//  Created by Dominik Baki on 16.05.25.
+//  Created by Dominik Baki on 20.05.25.
 //
 
 import SwiftUI

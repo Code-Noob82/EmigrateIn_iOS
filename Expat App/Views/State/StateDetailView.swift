@@ -12,74 +12,108 @@ struct StateDetailView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 15) {
-                if authViewModel.isLoadingStateDetails {
-                    ProgressView("Lade Bundesland-Details...")
-                        .padding()
-                } else if let details = authViewModel.selectedStateDetails {
-                    // Hier die Details des Bundeslandes anzeigen
-                    Text(details.stateName) // stateName kommt aus deinem StateSpecificInfo-Model
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.bottom)
-                    
-                    // Anzeige der apostilleInfo
-                    if let apostilleInfoText = details.apostilleInfo, !apostilleInfoText.isEmpty {
-                        SectionView(title: "Apostille Informationen", content: apostilleInfoText)
-                    }
-                    
-                    // Anzeige der apostilleAuthorities
-                    if let authorities = details.apostilleAuthorities, !authorities.isEmpty {
-                        Text("Zuständige Behörden für Apostillen:")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .padding(.top)
-                            .padding(.bottom, 5)
+        ZStack {
+            AppStyles.backgroundGradient
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 15) {
+                    if authViewModel.isLoadingStateDetails {
+                        ProgressView("Lade Bundesland-Details...")
+                            .padding()
+                            .tint(AppStyles.primaryTextColor)
                         
-                        VStack(alignment: .leading, spacing: 10) {
-                            ForEach(authorities, id: \.self) { authority in // Annahme: Authority hat 'name' und ist Identifiable oder name ist unique
-                                VStack(alignment: .leading) {
-                                    Text(authority.name)
-                                        .fontWeight(.semibold)
-                                    if let linkString = authority.link, let url = URL(string: linkString) {
-                                        Link(destination: url) {
-                                            Text(linkString)
-                                                .font(.caption)
-                                                .lineLimit(1)
-                                                .truncationMode(.tail)
-                                                .foregroundColor(.blue)
-                                        }
-                                    } else if let linkString = authority.link, !linkString.isEmpty {
-                                        Text("Link: \(linkString)")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                    }
-                                }
+                    } else if let details = authViewModel.selectedStateDetails {
+                        // Haupttitel des Bundeslandes
+                        Text(details.stateName)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(AppStyles.primaryTextColor)
+                            .padding(.bottom)
+                        
+                        // MARK: - Apostille Informationen
+                        if let apostilleInfoText = details.apostilleInfo, !apostilleInfoText.isEmpty {
+                            SectionView(title: "Apostille Informationen", content: apostilleInfoText)
+                                .foregroundColor(AppStyles.secondaryTextColor)
+                        }
+                        
+                        // MARK: - Zuständige Behörden für Apostillen
+                        if let authorities = details.apostilleAuthorities, !authorities.isEmpty {
+                            Text("Zuständige Behörden für Apostillen:")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(AppStyles.primaryTextColor)
+                                .padding(.top)
                                 .padding(.bottom, 5)
+                            
+                            VStack(alignment: .leading, spacing: 10) {
+                                ForEach(authorities) { authority in
+                                    VStack(alignment: .leading) {
+                                        Text(authority.name)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(AppStyles.primaryTextColor)
+                                        Spacer()
+                                        // Zeigt den Link als klickbaren Link an, wenn er gültig ist
+                                        if let linkString = authority.link, let url = URL(string: linkString) {
+                                            Link(destination: url) {
+                                                HStack(spacing: 5) {
+                                                    Image(systemName: "safari.fill")
+                                                        .font(.caption)
+                                                        .foregroundColor(Color.blue)
+                                                    Text(linkString)
+                                                        .font(.caption)
+                                                        .lineLimit(1)
+                                                        .truncationMode(.tail)
+                                                        .foregroundColor(AppStyles.primaryTextColor)
+                                                        .underline()
+                                                        .padding(.vertical, 2)
+                                                        .padding(.horizontal, 4)
+                                                        .background(AppStyles.secondaryTextColor.opacity(0.1)) // Zart abheben
+                                                        .cornerRadius(4)
+                                                }
+                                                .contentShape(Rectangle())
+                                            }
+                                            .buttonStyle(LinkPressEffect())
+                                            // Zeigt den Link als grauen Text an, wenn er nicht als URL geparst werden kann
+                                        } else if let linkString = authority.link, !linkString.isEmpty {
+                                            Text("Link: \(linkString)")
+                                                .font(.caption)
+                                                .foregroundColor(AppStyles.secondaryTextColor)
+                                        }
+                                    }
+                                    .padding(.bottom, 5)
+                                }
                             }
                         }
+                        Spacer()
+                    } else if let errorMessage = authViewModel.errorMessage, errorMessage.contains("Bundesland-Details") {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
+                    } else {
+                        Text("Keine Bundesland-Details verfügbar. Bitte wähle ein Bundesland in deinem Profil aus.")
+                            .foregroundColor(AppStyles.secondaryTextColor)
+                            .padding()
                     }
-                    // Füge hier weitere Felder aus deinem StateSpecificInfo-Model hinzu
-                } else if let errorMessage = authViewModel.errorMessage, errorMessage.contains("Bundesland-Details") {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                } else {
-                    Text("Keine Bundesland-Details verfügbar. Bitte wähle ein Bundesland in deinem Profil aus.")
-                        .foregroundColor(.secondary)
-                        .padding()
                 }
+                .padding()
             }
-            .padding()
         }
         .navigationTitle("Infos für \(authViewModel.selectedStateDetails?.stateName ?? authViewModel.homeStateName ?? "dein Bundesland")")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(AppStyles.backgroundGradient, for: .navigationBar) // Navigation Bar Hintergrund
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)
         .onAppear {
+            print("DEBUG: StateDetailView appeared")
             if authViewModel.selectedStateDetails == nil ||
                 authViewModel.selectedStateDetails?.id != authViewModel.userProfile?.homeStateId {
+                print("DEBUG: Lade Bundesland-Details onAppear")
                 Task {
                     await authViewModel.fetchSelectedStateDetails()
                 }
+            } else {
+                print("DEBUG: Details sind bereits geladen")
             }
         }
     }
@@ -89,3 +123,4 @@ struct StateDetailView: View {
     StateDetailView()
         .environmentObject(AuthenticationViewModel())
 }
+

@@ -63,6 +63,15 @@ extension AppStyles {
     }
 }
 
+struct LinkPressEffect: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0) // Skaliert beim Drücken
+            .opacity(configuration.isPressed ? 0.8 : 1.0)      // Macht es beim Drücken leicht transparent
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed) // Fügt eine sanfte Animation hinzu
+    }
+}
+
 extension View {
     func primaryButtonStyle() -> some View {
         self.modifier(AppStyles.PrimaryButton())

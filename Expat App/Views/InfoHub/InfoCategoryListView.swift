@@ -98,7 +98,7 @@ struct InfoCategoryListView: View {
                 }
             }
             .navigationDestination(for: InfoCategory.self) { selectedCategory in
-                InfoContentListView(category: selectedCategory, stateSpecificInfo: authViewModel.selectedStateDetails)
+                InfoContentListView(category: selectedCategory)
             }
         }
     }
