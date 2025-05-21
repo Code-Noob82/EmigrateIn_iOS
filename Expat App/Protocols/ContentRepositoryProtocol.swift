@@ -11,4 +11,13 @@ import FirebaseFirestore
 protocol ContentRepositoryProtocol {
     func fetchInfoCategories() async throws -> [InfoCategory]
     func fetchInfoContent(for categoryId: String) async throws -> [InfoContent]
+    
+    // NEU: Funktionen für Checklist-Kategorien
+    func fetchChecklistCategories() async throws -> [ChecklistCategory]
+    func fetchChecklistItems(for categoryId: String) async throws -> [ChecklistItem]
+    
+    // NEU: Funktionen für den User-Checklist-Status
+    func fetchUserChecklistState(for userId: String) async throws -> UserChecklistState
+    func saveUserChecklistState(for userId: String, state: UserChecklistState) async throws
+    func updateChecklistItemCompletion(userId: String, itemId: String, isCompleted: Bool) async throws
 }
