@@ -35,10 +35,7 @@ struct AppTabView: View {
                     InfoCategoryListView().environmentObject(authViewModel)
                 }
                 Tab("Checklisten", systemImage: "checklist.checked", value: .checklists) {
-                    Text("Checklisten Inhalt")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(AppStyles.backgroundGradient)
-                    // ChecklistView()
+                    ChecklistCategoryListView().environmentObject(authViewModel)
                 }
                 Tab("Botschaft", systemImage: "building.columns.fill", value: .embassy) {
                     EmbassyInfoView()
