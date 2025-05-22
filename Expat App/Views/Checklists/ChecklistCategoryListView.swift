@@ -41,7 +41,7 @@ struct ChecklistCategoryListView: View {
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                         
-                        Button("Jetzt Registrieren") {
+                        Button("Jetzt Anmelden") {
                             self.showRegistrationPrompt = true
                         }
                         .primaryButtonStyle()

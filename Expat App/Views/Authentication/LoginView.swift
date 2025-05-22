@@ -12,11 +12,7 @@ import GoogleSignInSwift
 
 struct LoginView: View {
     @EnvironmentObject var viewModel: AuthenticationViewModel
-    private let googleButtonViewModel = GoogleSignInButtonViewModel(
-        scheme: .dark,
-        style: .wide,
-        state: .pressed
-    )
+    @State private var isPasswordVisible = false
     
     var body: some View {
         ZStack {
@@ -24,22 +20,43 @@ struct LoginView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                TextField("E-Mail", text: $viewModel.email)
+                TextField("E-Mail Adresse", text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(20)
-                // .tint(AppStyles.accentColor)
+                ZStack(alignment: .trailing) {
+                    if isPasswordVisible {
+                        TextField("Passwort", text: $viewModel.password)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(20)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                    } else {
+                        SecureField("Passwort", text: $viewModel.password)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(20)
+                    }
+                    Button(action: {
+                        isPasswordVisible.toggle()
+                    }) {
+                        Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
+                            .foregroundColor(.gray)
+                            .padding(.trailing, 15)
+                    }
+                }
                 
-                SecureField("Passwort", text: $viewModel.password)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(20)
-                // .tint(AppStyles.accentColor)
-                
-                Button("Anmelden") {
+                Button {
                     viewModel.signInWithEmail()
+                } label: {
+                    HStack {
+                        Image(systemName: "person.circle.fill")
+                        Text("Anmelden")
+                            .font(.system(size: 18, weight: .semibold))
+                    }
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -56,14 +73,27 @@ struct LoginView: View {
                 .padding(.top, 5)
                 
                 Divider().padding(.vertical, 10)
-                Text("Andere Anmeldemethode nutzen")
+                Text("Alternative Anmeldemethode nutzen")
                 
-                GoogleSignInButton(viewModel: googleButtonViewModel, action: {
+                Button {
                     Task {
                         await viewModel.signInWithGoogle()
                     }
-                })
-                .frame(height: AppStyles.buttonHeight)
+                } label: {
+                    HStack {
+                        Image("google_icon")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 20, height: 20)
+                        Text("Sign in with Google")
+                            .font(.system(size: 18, weight: .semibold))
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(AppStyles.buttonBackgroundColor)
+                    .foregroundColor(AppStyles.buttonTextColor)
+                    .clipShape(Capsule())
+                }
                 .disabled(viewModel.isLoading)
                 
                 Button {
@@ -74,6 +104,7 @@ struct LoginView: View {
                     HStack {
                         Image(systemName: "person.crop.circle.badge.questionmark")
                         Text("Als Gast fortfahren")
+                            .font(.system(size: 18, weight: .semibold))
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
