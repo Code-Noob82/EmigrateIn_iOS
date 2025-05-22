@@ -123,7 +123,7 @@ class ContentRepository: ContentRepositoryProtocol {
             
             if isCompleted {
                 // Wenn true, setzen wir den Wert auf true
-                try await userChecklistStateRef.updateData([fieldToUpdate: true])
+                try await userChecklistStateRef.setData(["completedItems": [itemId: true]], merge: true)
             } else {
                 // Wenn false, löschen wir das Feld aus dem Map (effizienter für Firestore)
                 try await userChecklistStateRef.updateData([fieldToUpdate: FieldValue.delete()])
@@ -133,5 +133,36 @@ class ContentRepository: ContentRepositoryProtocol {
             print("Error updating checklist item completion: \(error.localizedDescription)")
             throw error
         }
+    }
+    
+    // NEU HINZUGEFÜGT: Implementierung der Snapshot Listener Funktion
+    func addChecklistStateSnapshotListener(
+        for userId: String,
+        completion: @escaping (Result<UserChecklistState?, Error>) -> Void
+    ) -> ListenerRegistration {
+        return db.collection("user_checklist_states").document(userId)
+            .addSnapshotListener { documentSnapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let document = documentSnapshot else {
+                    // Dies sollte nicht passieren, wenn error nil ist
+                    completion(.failure(NSError(domain: "Firestore", code: 0, userInfo: [NSLocalizedDescriptionKey: "Document snapshot is nil"])))
+                    return
+                }
+                
+                if document.exists {
+                    do {
+                        let state = try document.data(as: UserChecklistState.self)
+                        completion(.success(state))
+                    } catch {
+                        completion(.failure(error)) // Dekodierungsfehler
+                    }
+                } else {
+                    completion(.success(nil)) // Dokument existiert nicht
+                }
+            }
     }
 }

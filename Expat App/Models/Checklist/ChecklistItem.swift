@@ -14,6 +14,7 @@ struct ChecklistItem: Codable, Identifiable {
     let categoryId: String // // ID der übergeordneten Checkliste
     let text: String // Text der Aufgabe
     let details: String? // Optionale Details
+    let isDoneDefault: Bool?
     let order: Int // Reihenfolge für die Anzeige
     
     // Hinweis für die Implementierung:

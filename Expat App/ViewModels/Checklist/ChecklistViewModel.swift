@@ -24,6 +24,9 @@ class ChecklistViewModel: ObservableObject {
     private let repository: ContentRepositoryProtocol // Abhängigkeit vom Protokoll
     private var authListener: AuthStateDidChangeListenerHandle?
     
+    // NEU: Firestore Snapshot Listener Handle
+    private var checklistStateListener: ListenerRegistration?
+    
     
     // Dependency Injection: Initialisiert mit categoryId und optionalem Repository
     init(categoryId: String, repository: ContentRepositoryProtocol = ContentRepository()) {
@@ -38,11 +41,14 @@ class ChecklistViewModel: ObservableObject {
         // Initiales Laden der Checklisten-Items und des Status
         Task {
             await fetchChecklistItems() // Lädt die Items der Kategorie
-            if self.currentUserId == nil && !self.isCurrentuserAnonymous { // Lade Status nur für nicht-anonyme User
-                await fetchUserChecklistState()
-            } else if self.isCurrentuserAnonymous {
-                print("Anonymous user, skipping fetching user checklist state.")
-                self.completedItemsState = [:] // Stellt sicher, dass der Status für anonyme User leer ist
+            if let _ = self.currentUserId, !self.isCurrentuserAnonymous {
+                await fetchUserChecklistState() // Startet den Firestore Listener für diesen Nutzer
+            } else {
+                // Wenn anonym oder nicht angemeldet, sorge dafür, dass der Listener entfernt ist
+                // und der Status leer ist.
+                self.removeChecklistStateListener() // Wichtig: Listener explizit entfernen
+                self.completedItemsState = [:]
+                print("Anonymous or signed out user. Checklist state will not be fetched from Firestore.")
             }
         }
     }
@@ -51,6 +57,10 @@ class ChecklistViewModel: ObservableObject {
         // Auth-Listener beim Deinitialisieren entfernen, um Speicherlecks zu vermeiden
         if let handle = authListener {
             Auth.auth().removeStateDidChangeListener(handle)
+        }
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            self.removeChecklistStateListener()
         }
     }
     
@@ -76,31 +86,40 @@ class ChecklistViewModel: ObservableObject {
         isLoading = false
     }
     
-    // Lädt den erledigten Status der Items für den angemeldeten Nutzer aus Firestore
+    // Diese Funktion wird jetzt primär vom Listener getriggert oder wenn ein User-Wechsel sie explizit aufruft.
     func fetchUserChecklistState() async {
         guard let userId = self.currentUserId else {
             // Wenn kein Nutzer angemeldet ist.
             self.completedItemsState = [:]
-            print("No user signed in, not fetching user checklist state from Firestore.")
+            removeChecklistStateListener()
+            print("No user signed in, clearing checklist state.")
             return
         }
+        removeChecklistStateListener()
         
-        print("Fetching user checklist state for user: \(userId)")
+        print("Adding Firestore snapshot listener for user checklist state: \(userId)")
         
-        do {
-            let state = try await repository.fetchUserChecklistState(for: userId) // Ruft den Status über das Repository ab
-            self.completedItemsState = state.completedItems ?? [:]
-            print("Successfully fetched user checklist state: \(completedItemsState.count) completed items.")
-        } catch {
-            // Behandlt den spezifischen Fehler, wenn das Dokument nicht existiert (Code 404)
-            if let nsError = error as NSError?, nsError.code == 404 {
-                print("User checklist state document not found for user: \(userId). Initializing empty state.")
-                self.completedItemsState = [:] // Initialisiert mit leerem Status
-            } else {
-                print("Error fetching user checklist state: \(error.localizedDescription)")
-                self.errorMessage = "Fehler beim Laden des Checklist-Status: \(error.localizedDescription)"
-                self.completedItemsState = [:] // Bei anderen Fehlern auch leeren
+        checklistStateListener = repository.addChecklistStateSnapshotListener(for: userId) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let state):
+                self.completedItemsState = state?.completedItems ?? [:]
+                print("Successfully updated completedItemsState from Firestore snapshot. Items: \(self.completedItemsState.count)")
+            case .failure(let error):
+                print("Error fetching user checklist state from snapshot: \(error.localizedDescription)")
+                self.errorMessage = "Fehler beim Laden des Status: \(error.localizedDescription)"
+                self.completedItemsState = [:]
             }
+        }
+    }
+    
+    // Funktion zum Entfernen des Listeners
+    private func removeChecklistStateListener() {
+        if let listener = checklistStateListener {
+            listener.remove()
+            checklistStateListener = nil
+            print("Firestore checklist state listener removed.")
         }
     }
     
@@ -149,6 +168,7 @@ class ChecklistViewModel: ObservableObject {
                     if user != nil && !self.isCurrentuserAnonymous { // Lade Status nur für NICHT-anonyme User
                         await self.fetchUserChecklistState()
                     } else {
+                        self.removeChecklistStateListener()
                         self.completedItemsState = [:] // Leert Status bei Abmeldung oder wenn anonym
                         print("User changed or became anonymous. Clearing checklist state.")
                     }

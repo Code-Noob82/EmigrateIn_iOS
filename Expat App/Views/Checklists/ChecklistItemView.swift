@@ -20,13 +20,7 @@ struct ChecklistItemView: View {
                 .resizable()
                 .frame(width: 24, height: 24)
                 .foregroundColor(viewModel.isItemCompleted(item) ? .green : AppStyles.secondaryTextColor) // Grün bei erledigt
-                .onTapGesture {
-                    Task {
-                        await viewModel.toggleItemCompletion(item: item)
-                    }
-                }
-                .disabled(viewModel.isLoading) // Checkbox während des Speicherns deaktivieren
-
+            
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.text)
                     .font(.body)
@@ -45,23 +39,22 @@ struct ChecklistItemView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 5) // Kleines Padding innerhalb des Listeneintrags
+        .onTapGesture {
+            Task {
+                await viewModel.toggleItemCompletion(item: item)
+            }
+        }
+        .disabled(viewModel.isLoading) // Deaktiviert die gesamte Zeile während des Ladevorgangs
+        // Animation, damit der Übergang des Checkbox-Status sanfter ist
+        .animation(.default, value: viewModel.isItemCompleted(item))
     }
 }
 
 // MARK: - Preview für ChecklistItemView
 #Preview("ChecklistItemView") {
-    let dummyItem = ChecklistItem(id: "dummy_item_1", categoryId: "dummy_category", text: "Registrierung beim Einwohnermeldeamt", details: "Wichtig innerhalb der ersten 14 Tage nach Ankunft.", order: 1)
-    let dummyItemCompleted = ChecklistItem(id: "dummy_item_2", categoryId: "dummy_category", text: "Bankkonto eröffnen", details: nil, order: 2)
     
-    let mockViewModel = ChecklistViewModel(categoryId: "dummy_category")
-    // Mock den Status für den Preview
-    mockViewModel.completedItemsState = ["dummy_item_1": true]
-    
-    return VStack(spacing: 20) {
-        ChecklistItemView(viewModel: mockViewModel, item: dummyItem)
-        ChecklistItemView(viewModel: mockViewModel, item: dummyItemCompleted)
-    }
-    .padding()
-    .background(AppStyles.backgroundGradient.ignoresSafeArea()) // Preview Hintergrund
-    .environmentObject(AuthenticationViewModel()) // Für EnvironmentObject
+    let emptyViewModel = ChecklistViewModel(categoryId: "preview_dummy_category")
+    let emptyItem = ChecklistItem(id: "preview_dummy_item", categoryId: "preview_dummy_category", text: "Vorschau Item", details: nil, isDoneDefault: false, order: 0)
+    ChecklistItemView(viewModel: emptyViewModel, item: emptyItem)
+        .environmentObject(AuthenticationViewModel()) // Für EnvironmentObject
 }

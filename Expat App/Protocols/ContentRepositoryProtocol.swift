@@ -20,4 +20,9 @@ protocol ContentRepositoryProtocol {
     func fetchUserChecklistState(for userId: String) async throws -> UserChecklistState
     func saveUserChecklistState(for userId: String, state: UserChecklistState) async throws
     func updateChecklistItemCompletion(userId: String, itemId: String, isCompleted: Bool) async throws
+    // NEU HINZUGEFÜGT: Funktion zum Hinzufügen eines Snapshot Listeners
+    func addChecklistStateSnapshotListener(
+        for userId: String,
+        completion: @escaping (Result<UserChecklistState?, Error>) -> Void
+    ) -> ListenerRegistration // Gibt ListenerRegistration zurück
 }
