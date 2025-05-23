@@ -20,12 +20,15 @@ struct ContentView: View {
             if authViewModel.isAuthenticated {
                 // Wenn angemeldet, zeige die Haupt-TabView
                 AppTabView()
+                    .transition(.opacity.animation(.easeOut(duration: 0.5)))
             } else {
                 // Wenn nicht angemeldet, zeige die AuthenticationView
                 AuthenticationView()
+                    .transition(.opacity.animation(.easeOut(duration: 0.5)))
             }
             // Wichtig: Das EnvironmentObject wird von EmigrateInApp hierher weitergereicht.
         }
+        .animation(.easeInOut(duration: 0.5), value: authViewModel.isAuthenticated)
         .sheet(isPresented: $authViewModel.showStateSelection) {
             StateSelectionView()
                 .environmentObject(authViewModel)

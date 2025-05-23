@@ -72,6 +72,19 @@ struct LinkPressEffect: ButtonStyle {
     }
 }
 
+struct TextLinkButtonStyle: ButtonStyle {
+    var textColor: Color = .blue // Standardfarbe für Links
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline) // Oder die gewünschte Schriftart
+            .foregroundColor(textColor)
+            .underline() // Fügt die Unterstreichung hinzu
+            .opacity(configuration.isPressed ? 0.5 : 1.0) // Leichtes Dimmen beim Drücken
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
 extension View {
     func primaryButtonStyle() -> some View {
         self.modifier(AppStyles.PrimaryButton())

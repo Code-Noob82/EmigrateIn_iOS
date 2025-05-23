@@ -25,12 +25,25 @@ struct AuthenticationView: View {
                     switch viewModel.currentAuthView {
                     case .login:
                         LoginView()
+                        // Übergang für LoginView beim Erscheinen/Verschwinden
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .leading), // Login kommt von links (wenn von Register/Forgot zurück)
+                                removal: .move(edge: .trailing))) // Login geht nach rechts (wenn zu Register/Forgot)
                     case .registration:
                         RegistrationView()
+                        // Übergang für RegistrationView beim Erscheinen/Verschwinden
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing), // Register kommt von rechts (wenn von Login)
+                                removal: .move(edge: .leading))) // Register geht nach links (wenn zurück zu Login)
                     case .forgotPassword:
                         ForgotPasswordView()
+                        // Übergang für ForgotPasswordView beim Erscheinen/Verschwinden
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing), // Forgot kommt von rechts
+                                removal: .move(edge: .leading))) // Forgot geht nach links
                     }
                 }
+                .animation(.easeInOut(duration: 0.4), value: viewModel.currentAuthView)
                 .navigationTitle(titleForCurrentAuthView())
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.hidden, for: .navigationBar)
@@ -53,7 +66,7 @@ struct AuthenticationView: View {
     private func titleForCurrentAuthView() -> String {
         switch viewModel.currentAuthView {
         case .login: return "Anmelden"
-        case .registration: return "Registrieren"
+        case .registration: return "Neu Registrieren"
         case .forgotPassword: return "Passwort zurücksetzen"
         }
     }
