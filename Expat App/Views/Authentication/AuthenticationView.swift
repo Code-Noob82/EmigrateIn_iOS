@@ -46,6 +46,7 @@ struct AuthenticationView: View {
                 .animation(.easeInOut(duration: 0.4), value: viewModel.currentAuthView)
                 .navigationTitle(titleForCurrentAuthView())
                 .navigationBarTitleDisplayMode(.inline)
+                .background(AppStyles.backgroundGradient)
                 .toolbarBackground(.hidden, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)

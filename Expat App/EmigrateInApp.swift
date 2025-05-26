@@ -23,6 +23,8 @@ struct EmigrateInApp: App {
     
     let backgroundGradient = AppStyles.backgroundGradient
     
+    let splashScreenFullText: String = "EmigrateIn - Dein Zuhause im Ausland startet hier!"
+    
     // Initialisierer der App-Struktur
     init() {
         print("App init() aufgerufen.") // Debug-Ausgabe
@@ -38,9 +40,18 @@ struct EmigrateInApp: App {
                 if showingSplashScreen {
                     SplashScreenView()
                         .onAppear {
-                            // Zeige den Splash Screen für eine kurze Zeit (z.B. 2 Sekunden)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                withAnimation {
+                            let logoAnimationTotalDuration = 0.5 + 1.5
+                            let textAnimationDuration = 1.0 + (Double(splashScreenFullText.count) * 0.05)
+                            let totalSplashScreenAnimationTime = max(logoAnimationTotalDuration, textAnimationDuration)
+                            let finalDelayBeforeTransition = totalSplashScreenAnimationTime + 0.5
+                            
+                            print("Logo Animation Dauer: \(logoAnimationTotalDuration)s")
+                            print("Text Animation Dauer: \(textAnimationDuration)s")
+                            print("Gesamt Splash Screen Animationsdauer: \(totalSplashScreenAnimationTime)s")
+                            print("Endgültige Verzögerung vor Übergang: \(finalDelayBeforeTransition)s")
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + finalDelayBeforeTransition) {
+                                withAnimation(.easeOut(duration: 0.5)) {
                                     showingSplashScreen = false
                                 }
                             }
@@ -49,15 +60,18 @@ struct EmigrateInApp: App {
                     // Zeige das Onboarding, wenn es noch nicht abgeschlossen wurde
                     OnboardingContainerView {
                         // Diese Aktion wird ausgeführt, wenn der "Los geht's!" Button gedrückt wird
-                        withAnimation {
+                        withAnimation(.easeOut(duration: 0.7)) {
                             hasCompletedOnboarding = true // Markiert Onboarding als abgeschlossen
                         }
                     }
-                    // Übergib das ViewModel, falls das Onboarding es benötigen sollte (aktuell nicht der Fall)
-                    // .environmentObject(authViewModel)
+                    .transition(.move(edge: .trailing))
                 } else {
                     // Nach Splash & Onboarding: Zeige die ContentView, die den Auth-Status prüft
                     ContentView()
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .bottom),
+                            removal: .opacity)
+                        )
                         .environmentObject(authViewModel) // Übergibt das ViewModel an ContentView und dessen Kinder
                 }
             }
@@ -67,6 +81,8 @@ struct EmigrateInApp: App {
                 // Leite die URL an das Google Sign-In SDK weiter, damit es den Login abschließen kann.
                 GIDSignIn.sharedInstance.handle(incomingURL)
             }
+            .animation(.default, value: showingSplashScreen)
+            .animation(.default, value: hasCompletedOnboarding)
         }
     }
 }
