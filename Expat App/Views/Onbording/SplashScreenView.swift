@@ -8,28 +8,15 @@
 import SwiftUI
 
 struct SplashScreenView: View {
-    // Definiert die spezifische Textfarbe für "Emigrate"
-    let emigrateTextColor = Color(red: 0.93, green: 0.95, blue: 0.96)
-    // Definiert die spezifische Textfarbe für "In" (aus FIGMA-Design RGBA: 51, 103, 73, 1)
-    let inTextColor = Color(red: 51/255, green: 103/255, blue: 73/255) // Umrechnung von 0-255 auf 0.0-1.0
-    
-    // Erzeugt den formatierten Text für "EmigrateIn" mit unterschiedlichen Farben
-    private var appNameFormatted: AttributedString {
-        var emigrateString = AttributedString("Emigrate")
-        // Setzt die Farbe und Schrift für "Emigrate"
-        emigrateString.foregroundColor = emigrateTextColor
-        emigrateString.font = .custom("SFPro-SemiBold", size: 60)
-        
-        var inString = AttributedString("In")
-        inString.foregroundColor = inTextColor
-        inString.font = .custom("SFPro-SemiBold", size: 60)
-        return emigrateString + inString // Fügt beide Teile zusammen
-    }
     
     var body: some View {
         ZStack {
             VStack(spacing: 8) {
-                Text(appNameFormatted) // Verwendet die formatierten AttributedString
+                Image("1024")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 361, height: 361)
+                
                 Text("Gut vorbereitet auswandern – mit EmigrateIn")
                     .font(Font.custom("SFPro", size: 15))
                     .multilineTextAlignment(.center)
