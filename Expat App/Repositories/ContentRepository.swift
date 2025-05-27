@@ -9,6 +9,24 @@ import Foundation
 import FirebaseFirestore
 
 class ContentRepository: ContentRepositoryProtocol {
+    // HIER IST DIE NEUE FUNKTION: fetchChecklistCategory(by id:)
+    func fetchChecklistCategory(by id: String) async throws -> ChecklistCategory? {
+        print("Fetching single Checklist Category by ID: \(id)...")
+        do {
+            let documentSnapshot = try await db.collection("checklist_categories").document(id).getDocument()
+            guard documentSnapshot.exists else {
+                print("Checklist Category with ID \(id) not found.")
+                return nil
+            }
+            let category = try documentSnapshot.data(as: ChecklistCategory.self)
+            print("Fetched Checklist Category: \(id).")
+            return category
+        } catch {
+            print("Error fetching single checklist category by ID \(id): \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
     private let db = Firestore.firestore()
     
     func fetchInfoCategories() async throws -> [InfoCategory] {

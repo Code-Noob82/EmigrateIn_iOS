@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MarkdownUI
 
 struct ChecklistItemsListView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel // Für Authentifizierungsstatus
@@ -25,60 +26,68 @@ struct ChecklistItemsListView: View {
             backgroundGradient // Hintergrundgradient
                 .ignoresSafeArea()
             
-            Group {
-                // Ladezustand des ViewModels
-                if viewModel.isLoading {
-                    ProgressView("Lade Checklisten-Items...")
-                        .tint(AppStyles.primaryTextColor)
-                } else if let errorMessage = viewModel.errorMessage {
-                    VStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(AppStyles.destructiveColor)
-                            .padding(.bottom, 5)
-                        Text("Fehler")
-                            .font(.headline)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    if let description = viewModel.categoryDescription {
+                        Markdown(description)
+                            .markdownTheme(.basic)
+                            .font(.body)
                             .foregroundColor(AppStyles.primaryTextColor)
-                        Text(errorMessage)
-                            .font(.caption)
-                            .foregroundColor(AppStyles.secondaryTextColor)
-                            .multilineTextAlignment(.center)
                             .padding(.horizontal)
-                        Button("Erneut versuchen") {
-                            Task { await viewModel.fetchChecklistItems() } // Items neu laden
+                            .padding(.top, 10)
+                    }
+                    // Ladezustand des ViewModels
+                    if viewModel.isLoading {
+                        ProgressView("Lade Checklisten-Items...")
+                            .tint(AppStyles.primaryTextColor)
+                        
+                    } else if let errorMessage = viewModel.errorMessage {
+                        VStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.largeTitle)
+                                .foregroundColor(AppStyles.destructiveColor)
+                                .padding(.bottom, 5)
+                            Text("Fehler")
+                                .font(.headline)
+                                .foregroundColor(AppStyles.primaryTextColor)
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundColor(AppStyles.secondaryTextColor)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Button("Erneut versuchen") {
+                                Task { await viewModel.fetchChecklistDataAndState() } // Items neu laden
+                            }
+                            .padding(.top)
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppStyles.buttonBackgroundColor)
                         }
-                        .padding(.top)
-                        .buttonStyle(.borderedProminent)
-                        .tint(AppStyles.buttonBackgroundColor)
-                    }
-                    .padding()
-                } else if viewModel.items.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "tray.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(AppStyles.secondaryTextColor)
-                            .padding(.bottom, 5)
-                        Text("Keine Items in dieser Checkliste gefunden.")
-                            .foregroundColor(AppStyles.secondaryTextColor)
-                    }
-                    .padding()
-                } else {
-                    // Liste der Checklisten-Items
-                    List {
-                        ForEach(viewModel.items) { item in
-                            ChecklistItemView(viewModel: viewModel, item: item) // Die einzelne Item-View
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
+                        .padding()
+                    } else if viewModel.items.isEmpty {
+                        VStack(spacing: 8) {
+                            Image(systemName: "tray.fill")
+                                .font(.largeTitle)
+                                .foregroundColor(AppStyles.secondaryTextColor)
+                                .padding(.bottom, 5)
+                            Text("Keine Items in dieser Checkliste gefunden.")
+                                .foregroundColor(AppStyles.secondaryTextColor)
                         }
+                        .padding()
+                    } else {
+                        // Liste der Checklisten-Items
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(viewModel.items) { item in
+                                ChecklistItemView(viewModel: viewModel, item: item) // Die einzelne Item-View
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 20)
                     }
-                    .listStyle(.plain)
-                    .background(Color.clear)
-                    .scrollContentBackground(.hidden)
                 }
             }
         }
         // Navigations-Titel basierend auf der Kategorie-ID oder dem ersten Item
-        .navigationTitle(viewModel.items.first?.categoryId ?? "Checkliste") // Besser: Kategorietitel dynamisch laden
+        .navigationTitle(viewModel.categoryTitle ?? "Checkliste")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(backgroundGradient, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -92,7 +101,7 @@ struct ChecklistItemsListView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    Task { await viewModel.fetchChecklistItems() } // Items neu laden
+                    Task { await viewModel.fetchChecklistDataAndState() } // Items neu laden
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .foregroundColor(AppStyles.primaryTextColor)

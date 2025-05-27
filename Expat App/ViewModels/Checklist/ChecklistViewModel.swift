@@ -15,6 +15,9 @@ class ChecklistViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
     
+    @Published var categoryDescription: String? = nil
+    @Published var categoryTitle: String? = nil
+    
     // Zustand der Items für den aktuellen Nutzer: [ChecklistItem.id : isCompleted (Bool)]
     @Published var completedItemsState: [String: Bool] = [:]
     @Published private(set) var currentUserId: String?
@@ -40,7 +43,7 @@ class ChecklistViewModel: ObservableObject {
         
         // Initiales Laden der Checklisten-Items und des Status
         Task {
-            await fetchChecklistItems() // Lädt die Items der Kategorie
+            await fetchChecklistDataAndState() // Lädt die Items der Kategorie
             if let _ = self.currentUserId, !self.isCurrentuserAnonymous {
                 await fetchUserChecklistState() // Startet den Firestore Listener für diesen Nutzer
             } else {
@@ -64,9 +67,9 @@ class ChecklistViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Daten laden (Items & Status)
+    // MARK: - Daten laden (Kategorie-Details, Items & Status)
     
-    func fetchChecklistItems() async {
+    func fetchChecklistDataAndState() async { // <<< NEU: Umbenannt für Klarheit
         guard !isLoading else {
             return // Verhindert mehrfaches Laden
         }
@@ -75,13 +78,35 @@ class ChecklistViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            // Ruft die Items für die gegebene categoryId über das Repository ab
+            // 1. Kategorie-Details laden (für die Beschreibung)
+            if let category = try await repository.fetchChecklistCategory(by: self.categoryId) {
+                self.categoryDescription = category.description
+                self.categoryTitle = category.title
+                print("DEBUG: Loaded category description: \(self.categoryDescription ?? "nil")")
+                print("DEBUG: Loaded category title: \(self.categoryTitle ?? "nil")")
+            } else {
+                self.categoryDescription = nil
+                self.categoryTitle = nil
+                print("No category found for ID: \(self.categoryId)")
+            }
+            
+            // 2. Checklisten-Items laden
             let fetchedItems = try await repository.fetchChecklistItems(for: self.categoryId)
             self.items = fetchedItems
             print("Successfully fetched \(items.count) checklist items for category \(categoryId).")
+            
+            // 3. User-Checklist-Status laden/aktualisieren (falls angemeldet)
+            if let _ = self.currentUserId, !self.isCurrentuserAnonymous {
+                await fetchUserChecklistState() // Startet/aktualisiert den Firestore Listener
+            } else {
+                self.removeChecklistStateListener()
+                self.completedItemsState = [:]
+                print("Anonymous or signed out user. Checklist state will not be fetched from Firestore.")
+            }
+            
         } catch {
-            print("Error fetching checklist items: \(error.localizedDescription)")
-            self.errorMessage = "Fehler beim Laden der Checklisten-Items: \(error.localizedDescription)"
+            print("Error fetching checklist data or state: \(error.localizedDescription)")
+            self.errorMessage = "Fehler beim Laden der Checkliste: \(error.localizedDescription)"
         }
         isLoading = false
     }
@@ -97,7 +122,7 @@ class ChecklistViewModel: ObservableObject {
         }
         removeChecklistStateListener()
         
-        print("Adding Firestore snapshot listener for user checklist state: \(userId)")
+        print("Adding Firestore snapshot listener for user checklist state: \(userId) in category \(categoryId)") // Log-Anpassung
         
         checklistStateListener = repository.addChecklistStateSnapshotListener(for: userId) { [weak self] result in
             guard let self = self else { return }

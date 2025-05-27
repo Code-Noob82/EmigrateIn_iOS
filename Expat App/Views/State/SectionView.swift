@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MarkdownUI
 
 struct SectionView: View {
     let title: String
@@ -15,10 +16,16 @@ struct SectionView: View {
         VStack(alignment: .leading) {
             Text(title)
                 .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(AppStyles.primaryTextColor)
                 .padding(.bottom, 2)
-            Text(content)
+            
+            Markdown(content)
+                .markdownTheme(.basic)
                 .font(.body)
+                .foregroundColor(AppStyles.secondaryTextColor)
         }
+        .padding(.vertical, 5)
     }
 }
 

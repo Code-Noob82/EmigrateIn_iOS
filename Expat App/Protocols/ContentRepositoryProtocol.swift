@@ -16,6 +16,8 @@ protocol ContentRepositoryProtocol {
     func fetchChecklistCategories() async throws -> [ChecklistCategory]
     func fetchChecklistItems(for categoryId: String) async throws -> [ChecklistItem]
     
+    func fetchChecklistCategory(by id: String) async throws -> ChecklistCategory?
+    
     // NEU: Funktionen für den User-Checklist-Status
     func fetchUserChecklistState(for userId: String) async throws -> UserChecklistState
     func saveUserChecklistState(for userId: String, state: UserChecklistState) async throws

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FirebaseFirestore
+import MarkdownUI
 
 struct StateDetailView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel
@@ -52,7 +53,7 @@ struct StateDetailView: View {
                                         Text(authority.name)
                                             .fontWeight(.semibold)
                                             .foregroundColor(AppStyles.primaryTextColor)
-                                        Spacer()
+                                        
                                         // Zeigt den Link als klickbaren Link an, wenn er gültig ist
                                         if let linkString = authority.link, let url = URL(string: linkString) {
                                             Link(destination: url) {
@@ -60,7 +61,8 @@ struct StateDetailView: View {
                                                     Image(systemName: "safari.fill")
                                                         .font(.caption)
                                                         .foregroundColor(Color.blue)
-                                                    Text(linkString)
+                                                    
+                                                    Text(authority.name + " Webseite")
                                                         .font(.caption)
                                                         .lineLimit(1)
                                                         .truncationMode(.tail)

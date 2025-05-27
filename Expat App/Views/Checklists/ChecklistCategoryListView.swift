@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MarkdownUI
 
 struct ChecklistCategoryListView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel // Für isAnonymousUser
@@ -23,6 +24,7 @@ struct ChecklistCategoryListView: View {
                 
                 if authViewModel.isLoading || viewModel.isLoading { // Ladezustand des AuthViewModel oder des lokalen ViewModels
                     LoadingIndicatorView(message: "Lade Checklisten...")
+                    
                 } else if authViewModel.isAnonymousUser { // Zugriffskontrolle für anonyme Nutzer
                     VStack(spacing: 15) {
                         Image(systemName: "person.fill.questionmark")
@@ -105,25 +107,45 @@ struct ChecklistCategoryListView: View {
                 NavigationLink {
                     ChecklistItemsListView(categoryId: category.id ?? "")
                 } label: {
-                    HStack {
-                        Text(category.title)
-                            .font(.headline)
-                            .foregroundColor(AppStyles.primaryTextColor)
-                        Spacer()
-                        if let description = category.description, !description.isEmpty {
-                            Text(description)
-                                .font(.caption)
-                                .foregroundColor(AppStyles.secondaryTextColor)
-                        }
-                    }
+                    ChecklistCategoryRowView(category: category)
                 }
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
+                .padding(.vertical, 4)
             }
         }
         .listStyle(.plain)
         .background(Color.clear)
         .scrollContentBackground(.hidden)
+    }
+}
+
+// NEUE HILFS-VIEW für die einzelne Kategorie-Zeile
+struct ChecklistCategoryRowView: View {
+    let category: ChecklistCategory
+    
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(category.title)
+                .font(.headline)
+                .foregroundColor(AppStyles.primaryTextColor)
+            
+            Spacer()
+            // Hier wird absichtlich keine Beschreibung angezeigt,
+            // da sie in die Detailansicht verschoben wurde.
+            // Der Chevron-Pfeil wird vom NavigationLink selbst hinzugefügt.
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            // Aufgeteilt, um Compiler-Problem zu vermeiden
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(AppStyles.secondaryTextColor.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 }
 
