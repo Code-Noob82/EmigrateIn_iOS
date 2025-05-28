@@ -16,7 +16,7 @@ struct AppStyles {
         Color(red: 0.1, green: 0.55, blue: 0.55), // Helleres Petrol für innen
         Color(red: 0.05, green: 0.45, blue: 0.45)   // Dunkleres Petrol für außen
     ]
-
+    
     // Definiert den radialen Farbverlauf zentral
     static var backgroundGradient: RadialGradient {
         RadialGradient(
@@ -25,7 +25,7 @@ struct AppStyles {
             startRadius: 20,
             endRadius: UIScreen.main.bounds.width * 0.8) // Endradius, der sich etwas an die Breite anpasst
     }
-
+    
     // Definiert die Textfarben zentral
     static let primaryTextColor = Color(red: 0.93, green: 0.95, blue: 0.96)
     static let secondaryTextColor = Color(white: 0.85)
@@ -33,6 +33,16 @@ struct AppStyles {
     static let buttonBackgroundColor = primaryTextColor // Fast weiß
     static let destructiveColor = Color(red: 200, green: 0, blue: 0) // Solides, dunkleres Rot
     static let destructiveTextColor = Color(.black)
+    
+    // MARK: - NEU: Farben für Grid-Elemente
+    // Eine passende Akzentfarbe, die mit Petrol harmoniert (z.B. ein helles Gold oder ein helles Türkis)
+    static let accentColor = Color(red: 0.95, green: 0.75, blue: 0.3) // Ein helles Gold
+    
+    // Hintergrundfarbe der Gitterzelle (etwas dunkler als der Hintergrund, aber nicht zu dunkel)
+    static let cellBackgroundColor = Color(white: 0.15).opacity(0.7) // Ein dunkles Grau mit Transparenz
+    
+    // Randfarbe für die Gitterzelle
+    static let borderColor = Color(white: 0.3).opacity(0.5) // Ein etwas helleres Grau für den Rand
     
     // NEU: Globale Stilwerte für Buttons
     static let buttonHeight: CGFloat = 50
@@ -51,7 +61,7 @@ extension AppStyles {
                 .frame(maxWidth: .infinity)
                 .background(AppStyles.buttonBackgroundColor)
                 .foregroundColor(AppStyles.buttonTextColor)
-                //.clipShape(Capsule())
+            //.clipShape(Capsule())
                 .cornerRadius(AppStyles.buttonCornerRadius)
         }
     }
@@ -74,7 +84,7 @@ struct LinkPressEffect: ButtonStyle {
 
 struct TextLinkButtonStyle: ButtonStyle {
     var textColor: Color = .blue // Standardfarbe für Links
-
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline) // Oder die gewünschte Schriftart

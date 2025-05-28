@@ -63,18 +63,23 @@ struct InfoCategoryListView: View {
                         }
                         .padding()
                     } else {
-                        List {
-                            ForEach(viewModel.categories) { category in
-                                listItem(for: category)
-                                    .listRowBackground(Color.clear)
+                        ScrollView {
+                            let columns = [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ]
+                            LazyVGrid(columns: columns, spacing: 16) {
+                                ForEach(viewModel.categories) { category in
+                                    NavigationLink(value: category) {
+                                        InfoCategoryGridItemView(category: category)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
+                            .padding(.horizontal)
                         }
-                        .listStyle(.plain)
-                        .background(Color.clear)
-                        .scrollContentBackground(.hidden)
                     }
                 }
-                //.background(Color.clear)
             }
             .navigationTitle("Info Kategorien")
             .navigationBarTitleDisplayMode(.inline)
@@ -101,35 +106,6 @@ struct InfoCategoryListView: View {
                 InfoContentListView(category: selectedCategory)
             }
         }
-    }
-    
-    @ViewBuilder
-    private func listItem(for category: InfoCategory) -> some View {
-        // Für alle Nutzer, ob anonym oder nicht, soll die Navigation zur InfoContentListView möglich sein.
-        // Die Registrierungspflicht kommt erst bei der InfoContentDetailView.
-        NavigationLink(value: category) {
-            listItemContent(category: category)
-        }
-    }
-    
-    private func listItemContent(category: InfoCategory) -> some View {
-        HStack {
-            if let iconName = category.iconName {
-                Image(systemName: iconName)
-                    .frame(width: 30)
-            }
-            VStack(alignment: .leading) {
-                Text(category.title)
-                    .font(.headline)
-                    .foregroundColor(AppStyles.secondaryTextColor)
-                if let subtitle = category.subtitle, !subtitle.isEmpty {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(AppStyles.secondaryTextColor)
-                }
-            }
-        }
-        .padding(.vertical, 6)
     }
     
     private func getInfoContent(for category: InfoCategory) -> [InfoContent]? {
