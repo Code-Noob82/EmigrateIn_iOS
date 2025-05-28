@@ -16,7 +16,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="1024" translatesAutoresizingMaskIntoConstraints="NO" id="HQw-1T-DDo">
-                                <rect key="frame" x="16" y="246" width="361" height="361"/>
+                                <rect key="frame" x="16" y="245.66666666666663" width="361" height="361"/>
                                 <color key="backgroundColor" red="0.10000000000000001" green="0.55000000000000004" blue="0.55000000000000004" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="361" id="ZyR-Mf-AwN"/>

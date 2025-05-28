@@ -10,13 +10,22 @@ import SwiftUI
 struct SplashScreenView: View {
     @State private var logoOpacity: Double = 0.0
     @State private var animatedText = ""
+    @State private var mapOpacity: Double = 0.0
     
-    let fullText: String = "EmigrateIn - Dein Zuhause im Ausland startet hier!"
+    let fullText: String = "EmigrateIn - Dein smarter Weg ins Ausland"
     
     var body: some View {
         ZStack {
             AppStyles.backgroundGradient
                 .ignoresSafeArea()
+            
+            Image("WorldMap")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width * 0.9, height: UIScreen.main.bounds.width * 0.9)
+                .opacity(mapOpacity).opacity(0.5)
+                .animation(.easeIn(duration: 2.0), value: mapOpacity)
+                .blendMode(.luminosity)
             
             VStack(spacing: 8) {
                 Image("1024")
@@ -35,13 +44,21 @@ struct SplashScreenView: View {
             .padding()
         }
         .onAppear {
-            startLogoAnimation()
+            startMapAnimation()
+            startLogoAnimation(delay: 0.5)
             startTextAnimation(delay: 1.0)
         }
     }
     
-    private func startLogoAnimation() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+    // Funktion zum Starten der Weltkarten-Einblendung
+    private func startMapAnimation() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { // Startet sehr schnell
+            mapOpacity = 1.0
+        }
+    }
+    
+    private func startLogoAnimation(delay: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             logoOpacity = 1.0
         }
     }
