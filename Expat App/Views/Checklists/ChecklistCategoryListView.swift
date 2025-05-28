@@ -72,7 +72,7 @@ struct ChecklistCategoryListView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         if !authViewModel.isAnonymousUser {
                             Task { await viewModel.fetchCategories() }
@@ -102,50 +102,24 @@ struct ChecklistCategoryListView: View {
     
     @ViewBuilder
     private var categoryListContent: some View {
-        List {
-            ForEach(viewModel.categories) { category in
-                NavigationLink {
-                    ChecklistItemsListView(categoryId: category.id ?? "")
-                } label: {
-                    ChecklistCategoryRowView(category: category)
+        ScrollView {
+            let columns = [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ]
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(viewModel.categories) { category in
+                    NavigationLink {
+                        ChecklistItemsListView(categoryId: category.id ?? "")
+                    } label: {
+                        ChecklistCategoryGridItemView(category: category)
+                    }
+                    .buttonStyle(.plain)
+                    .buttonStyle(LinkPressEffect())
                 }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .padding(.vertical, 4)
             }
+            .padding(.horizontal)
         }
-        .listStyle(.plain)
-        .background(Color.clear)
-        .scrollContentBackground(.hidden)
-    }
-}
-
-// NEUE HILFS-VIEW für die einzelne Kategorie-Zeile
-struct ChecklistCategoryRowView: View {
-    let category: ChecklistCategory
-    
-    var body: some View {
-        HStack(spacing: 10) {
-            Text(category.title)
-                .font(.headline)
-                .foregroundColor(AppStyles.primaryTextColor)
-            
-            Spacer()
-            // Hier wird absichtlich keine Beschreibung angezeigt,
-            // da sie in die Detailansicht verschoben wurde.
-            // Der Chevron-Pfeil wird vom NavigationLink selbst hinzugefügt.
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            // Aufgeteilt, um Compiler-Problem zu vermeiden
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(AppStyles.secondaryTextColor.opacity(0.3), lineWidth: 1)
-                )
-        )
     }
 }
 

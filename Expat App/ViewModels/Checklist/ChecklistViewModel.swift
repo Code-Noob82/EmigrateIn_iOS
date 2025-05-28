@@ -23,6 +23,11 @@ class ChecklistViewModel: ObservableObject {
     @Published private(set) var currentUserId: String?
     @Published var isCurrentuserAnonymous = false
     
+    // MARK: - NEU: Fortschritts-Eigenschaften
+    @Published var totalProgress: Double = 0.0 // Gesamtfortschritt (0.0 - 1.0)
+    @Published var totalCompletedItems: Int = 0
+    @Published var totalItems: Int = 0
+    
     private let categoryId: String // Die Kategorie-ID für diese Checkliste
     private let repository: ContentRepositoryProtocol // Abhängigkeit vom Protokoll
     private var authListener: AuthStateDidChangeListenerHandle?
@@ -43,7 +48,7 @@ class ChecklistViewModel: ObservableObject {
         
         // Initiales Laden der Checklisten-Items und des Status
         Task {
-            await fetchChecklistDataAndState() // Lädt die Items der Kategorie
+            await fetchChecklistItemsAndCategoryDetails() // Lädt die Items der Kategorie
             if let _ = self.currentUserId, !self.isCurrentuserAnonymous {
                 await fetchUserChecklistState() // Startet den Firestore Listener für diesen Nutzer
             } else {
@@ -69,7 +74,7 @@ class ChecklistViewModel: ObservableObject {
     
     // MARK: - Daten laden (Kategorie-Details, Items & Status)
     
-    func fetchChecklistDataAndState() async { // <<< NEU: Umbenannt für Klarheit
+    func fetchChecklistItemsAndCategoryDetails() async { // <<< NEU: Umbenannt für Klarheit
         guard !isLoading else {
             return // Verhindert mehrfaches Laden
         }
@@ -92,17 +97,10 @@ class ChecklistViewModel: ObservableObject {
             
             // 2. Checklisten-Items laden
             let fetchedItems = try await repository.fetchChecklistItems(for: self.categoryId)
-            self.items = fetchedItems
+            self.items = fetchedItems.sorted(by: { $0.order < $1.order })
             print("Successfully fetched \(items.count) checklist items for category \(categoryId).")
             
-            // 3. User-Checklist-Status laden/aktualisieren (falls angemeldet)
-            if let _ = self.currentUserId, !self.isCurrentuserAnonymous {
-                await fetchUserChecklistState() // Startet/aktualisiert den Firestore Listener
-            } else {
-                self.removeChecklistStateListener()
-                self.completedItemsState = [:]
-                print("Anonymous or signed out user. Checklist state will not be fetched from Firestore.")
-            }
+            self.totalItems = self.items.count
             
         } catch {
             print("Error fetching checklist data or state: \(error.localizedDescription)")
@@ -116,6 +114,7 @@ class ChecklistViewModel: ObservableObject {
         guard let userId = self.currentUserId else {
             // Wenn kein Nutzer angemeldet ist.
             self.completedItemsState = [:]
+            self.calculateOverallProgress()
             removeChecklistStateListener()
             print("No user signed in, clearing checklist state.")
             return
@@ -124,17 +123,31 @@ class ChecklistViewModel: ObservableObject {
         
         print("Adding Firestore snapshot listener for user checklist state: \(userId) in category \(categoryId)") // Log-Anpassung
         
-        checklistStateListener = repository.addChecklistStateSnapshotListener(for: userId) { [weak self] result in
+        checklistStateListener = repository.addChecklistStateSnapshotListener(for: userId, categoryId: categoryId) { [weak self] result in
             guard let self = self else { return }
             
             switch result {
             case .success(let state):
-                self.completedItemsState = state?.completedItems ?? [:]
-                print("Successfully updated completedItemsState from Firestore snapshot. Items: \(self.completedItemsState.count)")
+                // Hier ist die Korrektur: Optional Chain auf 'state' selbst
+                                let allCompletedItems = state?.completedItems ?? [:] // Wenn state nil ist, nimm ein leeres Dictionary
+                                
+                                // Nun kannst du filter auf allCompletedItems anwenden, da es nicht optional ist
+                                let relevantCompletedItems = allCompletedItems.filter { (itemId, _) in
+                                    self.items.contains(where: { $0.id == itemId })
+                }
+                
+                self.completedItemsState = relevantCompletedItems
+                self.totalCompletedItems = self.completedItemsState.filter { $0.value }.count // NEU: Anzahl der erledigten Items aus dem State
+                self.calculateOverallProgress() // NEU: Fortschritt nach Status-Update berechnen
+                                
+                print("Successfully updated completedItemsState from Firestore snapshot. Items: \(self.completedItemsState.count) (Completed: \(self.totalCompletedItems))")
+                
             case .failure(let error):
                 print("Error fetching user checklist state from snapshot: \(error.localizedDescription)")
                 self.errorMessage = "Fehler beim Laden des Status: \(error.localizedDescription)"
                 self.completedItemsState = [:]
+                self.totalCompletedItems = 0 // Bei Fehler zurücksetzen
+                self.calculateOverallProgress() // Fortschritt aktualisieren
             }
         }
     }
@@ -175,10 +188,23 @@ class ChecklistViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Fortschrittsberechnung
+       
+       // Berechnung des Gesamtfortschritts
+       private func calculateOverallProgress() {
+           guard totalItems > 0 else {
+               totalProgress = 0.0
+               return
+           }
+           // totalCompletedItems wird bereits im Listener aktualisiert
+           totalProgress = Double(totalCompletedItems) / Double(totalItems)
+       }
+    
     // Hilfsfunktion, um zu prüfen, ob ein Item erledigt ist
     func isItemCompleted(_ item: ChecklistItem) -> Bool {
         return completedItemsState[item.id ?? ""] ?? false
     }
+    
     
     // MARK: - Auth State Listener (Reagiert auf An-/Abmeldung des Nutzers)
     private func addAuthListener() {

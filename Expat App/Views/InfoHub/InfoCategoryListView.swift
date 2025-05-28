@@ -92,7 +92,7 @@ struct InfoCategoryListView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task { await viewModel.fetchCategories() }
                     } label: {
