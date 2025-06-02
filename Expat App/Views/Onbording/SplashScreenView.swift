@@ -36,7 +36,8 @@ struct SplashScreenView: View {
                     .animation(.easeIn(duration: 1.5), value: logoOpacity)
                 
                 Text(animatedText)
-                    .font(Font.custom("SFPro", size: 15))
+                    .font(.callout)
+                    .fontWeight(.black)
                     .multilineTextAlignment(.center)
                     .foregroundColor(AppStyles.primaryTextColor)
                     .transition(.opacity)

@@ -19,7 +19,7 @@ class ChecklistViewModel: ObservableObject {
     @Published var categoryTitle: String? = nil
     
     // Zustand der Items für den aktuellen Nutzer: [ChecklistItem.id : isCompleted (Bool)]
-    @Published var completedItemsState: [String: Bool] = [:]
+    @Published var completedItemIDs: Set<String> = []
     @Published private(set) var currentUserId: String?
     @Published var isCurrentuserAnonymous = false
     
@@ -49,14 +49,15 @@ class ChecklistViewModel: ObservableObject {
         // Initiales Laden der Checklisten-Items und des Status
         Task {
             await fetchChecklistItemsAndCategoryDetails() // Lädt die Items der Kategorie
+            // Der Listener für den Status wird jetzt im AuthListener oder bei Bedarf aufgerufen
+            // und heißt jetzt z.B. listenForCompletedItemIDs
             if let _ = self.currentUserId, !self.isCurrentuserAnonymous {
-                await fetchUserChecklistState() // Startet den Firestore Listener für diesen Nutzer
+                await listenForCompletedItemIDs() // GEÄNDERT: Ruft die neue Listener-Funktion auf
             } else {
-                // Wenn anonym oder nicht angemeldet, sorge dafür, dass der Listener entfernt ist
-                // und der Status leer ist.
-                self.removeChecklistStateListener() // Wichtig: Listener explizit entfernen
-                self.completedItemsState = [:]
-                print("Anonymous or signed out user. Checklist state will not be fetched from Firestore.")
+                self.removeChecklistStateListener()
+                self.completedItemIDs = [] // GEÄNDERT: Leert das Set
+                self.calculateOverallProgress() // Fortschritt neu berechnen
+                print("ChecklistViewModel: Anonymous or signed out user. CompletedItemIDs cleared.")
             }
         }
     }
@@ -67,17 +68,24 @@ class ChecklistViewModel: ObservableObject {
             Auth.auth().removeStateDidChangeListener(handle)
         }
         Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            self.removeChecklistStateListener()
+            self?.removeChecklistStateListener()
         }
     }
     
     // MARK: - Daten laden (Kategorie-Details, Items & Status)
     
-    func fetchChecklistItemsAndCategoryDetails() async { // <<< NEU: Umbenannt für Klarheit
+    func fetchChecklistItemsAndCategoryDetails() async {
         guard !isLoading else {
             return // Verhindert mehrfaches Laden
         }
+        
+        // Nur neu laden, wenn Items leer sind, um mehrfaches Laden bei View-Appearance zu mildern
+        // Dies ist eine optionale Verbesserung, die Hauptursache für mehrfaches .onAppear sollte separat untersucht werden.
+        // if !items.isEmpty {
+        //     print("ChecklistViewModel: fetchChecklistItemsAndCategoryDetails - Items bereits geladen, überspringe erneutes Laden der Items.")
+        //     // Kategorie-Details könnten trotzdem neu geladen werden, falls nötig, oder auch bedingt gemacht werden.
+        //     // Fürs Erste lassen wir das Laden der Kategorie-Details hier, da es weniger kritisch ist.
+        // }
         
         isLoading = true
         errorMessage = nil
@@ -87,67 +95,55 @@ class ChecklistViewModel: ObservableObject {
             if let category = try await repository.fetchChecklistCategory(by: self.categoryId) {
                 self.categoryDescription = category.description
                 self.categoryTitle = category.title
-                print("DEBUG: Loaded category description: \(self.categoryDescription ?? "nil")")
-                print("DEBUG: Loaded category title: \(self.categoryTitle ?? "nil")")
             } else {
                 self.categoryDescription = nil
                 self.categoryTitle = nil
-                print("No category found for ID: \(self.categoryId)")
+                print("ChecklistViewModel: No category found for ID: \(self.categoryId)")
             }
             
             // 2. Checklisten-Items laden
             let fetchedItems = try await repository.fetchChecklistItems(for: self.categoryId)
             self.items = fetchedItems.sorted(by: { $0.order < $1.order })
-            print("Successfully fetched \(items.count) checklist items for category \(categoryId).")
-            
             self.totalItems = self.items.count
+            print("ChecklistViewModel: Successfully fetched \(items.count) items for category \(categoryId). Total items: \(self.totalItems)")
+            
+            self.calculateOverallProgress()
             
         } catch {
-            print("Error fetching checklist data or state: \(error.localizedDescription)")
+            print("ChecklistViewModel: Error fetching checklist data: \(error.localizedDescription)")
             self.errorMessage = "Fehler beim Laden der Checkliste: \(error.localizedDescription)"
         }
         isLoading = false
     }
     
-    // Diese Funktion wird jetzt primär vom Listener getriggert oder wenn ein User-Wechsel sie explizit aufruft.
-    func fetchUserChecklistState() async {
-        guard let userId = self.currentUserId else {
-            // Wenn kein Nutzer angemeldet ist.
-            self.completedItemsState = [:]
+    // MARK: - Listener für erledigte Item-IDs (NEUE FUNKTION)
+    func listenForCompletedItemIDs() async { // Neuer Name und Logik
+        guard let userId = self.currentUserId, !isCurrentuserAnonymous else {
+            self.completedItemIDs = []
             self.calculateOverallProgress()
             removeChecklistStateListener()
-            print("No user signed in, clearing checklist state.")
+            print("ChecklistViewModel: Kein User angemeldet oder anonym. Listener nicht gestartet, CompletedItemIDs geleert.")
             return
         }
-        removeChecklistStateListener()
         
-        print("Adding Firestore snapshot listener for user checklist state: \(userId) in category \(categoryId)") // Log-Anpassung
+        removeChecklistStateListener() // Alten Listener entfernen, falls vorhanden
         
-        checklistStateListener = repository.addChecklistStateSnapshotListener(for: userId, categoryId: categoryId) { [weak self] result in
+        print("ChecklistViewModel: Füge Listener für 'completed_items' Subcollection für User \(userId) hinzu (Kategorie: \(self.categoryId)).")
+        checklistStateListener = repository.addCompletedItemsSubcollectionListener(for: userId) { [weak self] result in
             guard let self = self else { return }
             
-            switch result {
-            case .success(let state):
-                // Hier ist die Korrektur: Optional Chain auf 'state' selbst
-                                let allCompletedItems = state?.completedItems ?? [:] // Wenn state nil ist, nimm ein leeres Dictionary
-                                
-                                // Nun kannst du filter auf allCompletedItems anwenden, da es nicht optional ist
-                                let relevantCompletedItems = allCompletedItems.filter { (itemId, _) in
-                                    self.items.contains(where: { $0.id == itemId })
+            Task { @MainActor in // Explizit auf MainActor für UI-relevante Updates
+                switch result {
+                case .success(let fetchedItemIDs):
+                    print("ChecklistViewModel: Listener lieferte \(fetchedItemIDs.count) erledigte Item-IDs: \(fetchedItemIDs)")
+                    self.completedItemIDs = fetchedItemIDs
+                    self.calculateOverallProgress() // Fortschritt aktualisieren, da sich die erledigten Items geändert haben
+                case .failure(let error):
+                    print("ChecklistViewModel: Fehler vom Subcollection-Listener: \(error.localizedDescription)")
+                    self.errorMessage = "Fehler beim Laden des Status: \(error.localizedDescription)"
+                    self.completedItemIDs = [] // Bei Fehler leeren
+                    self.calculateOverallProgress() // Fortschritt aktualisieren
                 }
-                
-                self.completedItemsState = relevantCompletedItems
-                self.totalCompletedItems = self.completedItemsState.filter { $0.value }.count // NEU: Anzahl der erledigten Items aus dem State
-                self.calculateOverallProgress() // NEU: Fortschritt nach Status-Update berechnen
-                                
-                print("Successfully updated completedItemsState from Firestore snapshot. Items: \(self.completedItemsState.count) (Completed: \(self.totalCompletedItems))")
-                
-            case .failure(let error):
-                print("Error fetching user checklist state from snapshot: \(error.localizedDescription)")
-                self.errorMessage = "Fehler beim Laden des Status: \(error.localizedDescription)"
-                self.completedItemsState = [:]
-                self.totalCompletedItems = 0 // Bei Fehler zurücksetzen
-                self.calculateOverallProgress() // Fortschritt aktualisieren
             }
         }
     }
@@ -157,71 +153,112 @@ class ChecklistViewModel: ObservableObject {
         if let listener = checklistStateListener {
             listener.remove()
             checklistStateListener = nil
-            print("Firestore checklist state listener removed.")
+            print("ChecklistViewModel: Firestore checklist state listener removed.")
         }
     }
     
-    // MARK: - Status von Checklist-Items verwalten
+    // MARK: - Status von Checklist-Items verwalten (ANGEPASST)
     
     func toggleItemCompletion(item: ChecklistItem) async {
         guard let userId = self.currentUserId, !isCurrentuserAnonymous, let itemId = item.id else {
-            print("Cannot save item completion: user not signed in, is anonymous, or item ID missing.")
-            errorMessage = "Anmeldung erforderlich, um den Status zu speichern."
+            print("ChecklistViewModel: Cannot save item completion - user not signed in, anonymous, or item ID missing.")
+            if item.id == nil {
+                print("DEBUG: Item '\(item.text)' hat eine nil ID in toggleItemCompletion.")
+            }
+            errorMessage = "Anmeldung erforderlich oder Item hat keine ID."
             return
         }
         
-        let isCurrentlyCompleted = completedItemsState[itemId] ?? false
+        print("DEBUG ChecklistViewModel: toggleItemCompletion - 'itemId' ('\(itemId)'), die ans Repository geht.")
+        
+        let isCurrentlyCompleted = completedItemIDs.contains(itemId)
         let newCompletionStatus = !isCurrentlyCompleted
         
-        // Aktualisiert den lokalen Zustand sofort für eine reaktive UI
-        completedItemsState[itemId] = newCompletionStatus
+        // Optimistisches UI-Update
+        if newCompletionStatus {
+            completedItemIDs.insert(itemId)
+        } else {
+            completedItemIDs.remove(itemId)
+        }
+        self.calculateOverallProgress() // Fortschritt nach lokaler Änderung aktualisieren
         
         do {
-            // Ruft die spezifische Funktion im Repository auf, um die Änderung in Firestore zu speichern
-            try await repository.updateChecklistItemCompletion(userId: userId, itemId: itemId, isCompleted: newCompletionStatus)
-            print("Successfully toggled item \(itemId) completion to \(newCompletionStatus) for user \(userId).")
+            // Rufe die neue Repository-Funktion auf
+            try await repository.setItemCompletionStatusInSubcollection(userId: userId, itemId: itemId, isCompleted: newCompletionStatus)
+            print("ChecklistViewModel: Successfully toggled subcollection item \(itemId) to \(newCompletionStatus) for user \(userId).")
+            // Der Listener wird den State von Firestore holen und ggf. korrigieren (obwohl es bei dieser Methode meist konsistent sein sollte)
         } catch {
-            print("Error toggling item completion: \(error.localizedDescription)")
+            print("ChecklistViewModel: Error toggling subcollection item \(itemId) für User \(userId): \(error.localizedDescription)")
             self.errorMessage = "Fehler beim Speichern des Status: \(error.localizedDescription)"
-            // Bei Fehlern den lokalen Zustand zurücksetzen (Rollback)
-            completedItemsState[itemId] = isCurrentlyCompleted
+            // Optimistisches Update zurückrollen bei Fehler
+            if newCompletionStatus {
+                completedItemIDs.remove(itemId)
+            } else {
+                completedItemIDs.insert(itemId)
+            }
+            self.calculateOverallProgress() // Fortschritt nach Rollback aktualisieren
         }
     }
     
-    // MARK: - Fortschrittsberechnung
-       
-       // Berechnung des Gesamtfortschritts
-       private func calculateOverallProgress() {
-           guard totalItems > 0 else {
-               totalProgress = 0.0
-               return
-           }
-           // totalCompletedItems wird bereits im Listener aktualisiert
-           totalProgress = Double(totalCompletedItems) / Double(totalItems)
-       }
+    // MARK: - Fortschrittsberechnung (ANGEPASST)
+    private func calculateOverallProgress() {
+        guard totalItems > 0 else {
+            totalProgress = 0.0
+            self.totalCompletedItems = 0 // Stellt sicher, dass auch dies zurückgesetzt wird
+            // print("ChecklistViewModel: Fortschrittsberechnung übersprungen, da totalItems = 0.")
+            return
+        }
+        
+        // Zählt, wie viele der Items der aktuellen Kategorie in der Menge der erledigten IDs sind
+        let relevantCompletedCount = self.items.filter { checklistItem in
+            guard let checklistItemId = checklistItem.id else { return false }
+            return self.completedItemIDs.contains(checklistItemId)
+        }.count
+        
+        self.totalCompletedItems = relevantCompletedCount
+        totalProgress = Double(relevantCompletedCount) / Double(totalItems)
+        print("ChecklistViewModel: Fortschritt berechnet - Erledigt: \(self.totalCompletedItems) / Gesamt: \(self.totalItems) = \(self.totalProgress)")
+    }
     
-    // Hilfsfunktion, um zu prüfen, ob ein Item erledigt ist
+    // Hilfsfunktion, um zu prüfen, ob ein Item erledigt ist (ANGEPASST)
     func isItemCompleted(_ item: ChecklistItem) -> Bool {
-        return completedItemsState[item.id ?? ""] ?? false
+        guard let itemId = item.id else {
+            // print("WARNUNG isItemCompleted: ChecklistItem '\(item.text)' hat keine ID.")
+            return false
+        }
+        let isCompleted = completedItemIDs.contains(itemId)
+        // Die folgende Zeile ist sehr gesprächig, für finales Debugging ggf. entfernen:
+        // print("DEBUG isItemCompleted: Item '\(item.text)' (ID: \(itemId)) Status (aus completedItemIDs): \(isCompleted)")
+        return isCompleted
     }
     
     
-    // MARK: - Auth State Listener (Reagiert auf An-/Abmeldung des Nutzers)
+    // MARK: - Auth State Listener (ANGEPASST, um neue Listener-Funktion aufzurufen)
     private func addAuthListener() {
         authListener = Auth.auth().addStateDidChangeListener { [weak self] auth, user in
             guard let self = self else { return }
+            
             Task { @MainActor in
-                let newIsAnonymous = user?.isAnonymous ?? true
-                if user?.uid != self.currentUserId || newIsAnonymous != self.isCurrentuserAnonymous {
-                    self.currentUserId = user?.uid // <-- Zuweisung zu @Published private(set) Property
-                    self.isCurrentuserAnonymous = newIsAnonymous // <-- Aktualisiere auch diese Property
+                let newUserId = user?.uid
+                let newIsAnonymous = user?.isAnonymous ?? true // Default true, falls kein Nutzer mehr da (abgemeldet)
+                
+                // Reagiere nur, wenn sich die UserID oder der Anonymitätsstatus tatsächlich geändert hat
+                if newUserId != self.currentUserId || newIsAnonymous != self.isCurrentuserAnonymous {
+                    print("ChecklistViewModel: Auth state changed. New UserID: \(newUserId ?? "nil"), Was: \(self.currentUserId ?? "nil"). New Anonymous: \(newIsAnonymous), Was: \(self.isCurrentuserAnonymous)")
                     
-                    if user != nil && !self.isCurrentuserAnonymous { // Lade Status nur für NICHT-anonyme User
-                        await self.fetchUserChecklistState()
+                    self.currentUserId = newUserId
+                    self.isCurrentuserAnonymous = newIsAnonymous
+                    
+                    if newUserId != nil && !newIsAnonymous {
+                        // Nutzer ist angemeldet und nicht anonym
+                        print("ChecklistViewModel: User angemeldet und nicht anonym. Starte Listener für erledigte Items.")
+                        await self.listenForCompletedItemIDs() // NEU: Ruft die korrekte Listener-Funktion auf
                     } else {
+                        // Nutzer abgemeldet oder anonym
+                        print("ChecklistViewModel: User abgemeldet oder anonym. Entferne Listener und leere Status.")
                         self.removeChecklistStateListener()
-                        self.completedItemsState = [:] // Leert Status bei Abmeldung oder wenn anonym
-                        print("User changed or became anonymous. Clearing checklist state.")
+                        self.completedItemIDs = [] // GEÄNDERT: Leert das Set
+                        self.calculateOverallProgress() // Fortschritt neu berechnen
                     }
                 }
             }

@@ -13,6 +13,7 @@ struct ChecklistItemGridItemView: View {
     
     // MARK: - Body
     var body: some View {
+        let _ = print("ChecklistItemGridItemView body: Item '\(item.text)' (ID: \(item.id ?? "NIL")). Erwarteter Status: \(viewModel.isItemCompleted(item))")
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 // Checkbox-Icon: Verwendet viewModel.isItemCompleted(item)

@@ -108,91 +108,58 @@ class ContentRepository: ContentRepositoryProtocol {
         }
     }
     
-    // MARK: - User Checklist State
+    // MARK: - User Checklist State (Sub-Collection-Ansatz - NEU)
     
-    // MARK: - Anpassung: Rückgabetyp zu UserChecklistState?
-    func fetchUserChecklistState(for userId: String) async throws -> UserChecklistState? {
-        print("Fetching user checklist state for user: \(userId)...")
-        do {
-            let documentSnapshot = try await db.collection("user_checklist_states").document(userId).getDocument()
-            
-            // MARK: - KORREKTUR: `try?` zum Erzeugen eines Optionalen
-            let state = try? documentSnapshot.data(as: UserChecklistState.self)
-            
-            if state != nil { // Jetzt ist dies eine gültige Prüfung, da state optional ist
-                print("Fetched user checklist state for user: \(userId).")
-            } else {
-                print("User checklist state document for user \(userId) not found or could not be decoded.")
-            }
-            return state
-        } catch {
-            print("Error fetching user checklist state for user \(userId): \(error.localizedDescription)")
-            throw error
-        }
-    }
-    
-    func saveUserChecklistState(for userId: String, state: UserChecklistState) async throws {
-        print("Saving user checklist state for user: \(userId)...")
-        do {
-            // MARK: - Konsistenz-Check: Collection Name
-            // `merge: true` ist wichtig, damit nur das 'completedItems' Feld (oder was auch immer im State-Objekt ist)
-            // aktualisiert wird und bestehende Felder im Dokument nicht überschrieben werden.
-            // Beachte: Wenn `UserChecklistState` NUR `completedItems` hat, ist `setData(from: state, merge: true)` gut.
-            // Wenn es andere Felder hätte, die NICHT überschrieben werden sollen, wäre es besser, nur `completedItems` zu aktualisieren.
-            try db.collection("user_checklist_states").document(userId).setData(from: state, merge: true)
-            print("User checklist state saved for user: \(userId).")
-        } catch {
-            print("Error saving user checklist state for user \(userId): \(error.localizedDescription)")
-            throw error
-        }
-    }
-    
-    func updateChecklistItemCompletion(userId: String, itemId: String, isCompleted: Bool) async throws {
-        print("Updating completion status for item \(itemId) for user \(userId) to \(isCompleted)...")
-        do {
-            // MARK: - Konsistenz-Check: Collection Name
-            let userChecklistStateRef = db.collection("user_checklist_states").document(userId)
-            
-            let fieldToUpdate = "completedItems.\(itemId)" // Punktnotation für Dictionary-Feld
-            
-            if isCompleted {
-                // Wenn true, setzen wir den Wert auf true im Map
-                // Dies erstellt das Dokument, falls es nicht existiert, und fügt das Feld hinzu.
-                try await userChecklistStateRef.setData([fieldToUpdate: true], merge: true)
-            } else {
-                // Wenn false, löschen wir das Feld aus dem Map.
-                // Das ist der korrekte Weg, ein Feld aus einem Map/Dictionary zu entfernen.
-                try await userChecklistStateRef.updateData([fieldToUpdate: FieldValue.delete()])
-            }
-            print("Successfully updated item \(itemId) completion to \(isCompleted) for user \(userId).")
-        } catch {
-            print("Error updating checklist item completion: \(error.localizedDescription)")
-            throw error
-        }
-    }
-    
-    // MARK: - Anpassung: addChecklistStateSnapshotListener Signatur & Implementierung
-    func addChecklistStateSnapshotListener(
-        for userId: String,
-        categoryId: String?, // Hier ist die `categoryId` (optional)
-        completion: @escaping (Result<UserChecklistState?, Error>) -> Void
-    ) -> ListenerRegistration {
-        // MARK: - Konsistenz-Check: Collection Name
-        let docRef = db.collection("user_checklist_states").document(userId)
+    // Setzt oder löscht den Erledigungsstatus eines Items in der 'completed_items' Sub-Collection.
+    func setItemCompletionStatusInSubcollection(userId: String, itemId: String, isCompleted: Bool) async throws {
+        let itemDocRef = db.collection("user_checklist_states").document(userId)
+            .collection("completed_items").document(itemId)
         
-        return docRef.addSnapshotListener { documentSnapshot, error in
+        if isCompleted {
+            print("DEBUG ContentRepository: Setze Item '\(itemId)' in Subcollection als erledigt für User '\(userId)'.")
+            // Erstellt das Dokument oder überschreibt es. Ein leeres Dokument oder eines mit Zeitstempel ist möglich.
+            try await itemDocRef.setData(["markedAt": FieldValue.serverTimestamp()]) // merge:false ist hier default und ok
+        } else {
+            print("DEBUG ContentRepository: Lösche Item '\(itemId)' aus Subcollection für User '\(userId)'.")
+            try await itemDocRef.delete()
+        }
+        print("Successfully updated subcollection item \(itemId) to \(isCompleted) for user \(userId).")
+    }
+    
+    // Fügt einen Snapshot-Listener zur 'completed_items' Sub-Collection eines Nutzers hinzu.
+    // Liefert ein Set der Document-IDs (itemIds) der erledigten Items.
+    func addCompletedItemsSubcollectionListener(
+        for userId: String,
+        completion: @escaping (Result<Set<String>, Error>) -> Void
+    ) -> ListenerRegistration {
+        let subcollectionRef = db.collection("user_checklist_states").document(userId)
+                                 .collection("completed_items")
+        
+        print("DEBUG ContentRepository: Listener für Subcollection 'user_checklist_states/\(userId)/completed_items' wird hinzugefügt.")
+        
+        // includeMetadataChanges: true kann beim Debuggen helfen, um zu sehen, wann Daten aus Cache vs. Server kommen.
+        // Für den normalen Betrieb ist es oft nicht nötig.
+        return subcollectionRef.addSnapshotListener(includeMetadataChanges: true) { querySnapshot, error in
             if let error = error {
+                print("DEBUG Subcollection Listener ERROR für User '\(userId)': \(error.localizedDescription)")
                 completion(.failure(error))
                 return
             }
             
-            // Wenn das Dokument existiert, versuchen wir zu dekodieren, sonst liefern wir nil
-            do {
-                let userState = try documentSnapshot?.data(as: UserChecklistState.self)
-                completion(.success(userState))
-            } catch {
-                completion(.failure(error)) // Dekodierungsfehler
+            guard let snapshot = querySnapshot else {
+                print("DEBUG Subcollection Listener WARN für User '\(userId)': querySnapshot war nil.")
+                completion(.success(Set<String>())) // Leeres Set bei unerwartetem nil-Snapshot
+                return
             }
+            
+            let metadata = snapshot.metadata
+            print("DEBUG Subcollection Listener METADATA für User '\(userId)': Aus Cache: \(metadata.isFromCache), Ausstehende Schreibvorgänge: \(metadata.hasPendingWrites)")
+            
+            // Extrahiert die Dokument-IDs. Jede Dokument-ID ist eine itemId eines erledigten Items.
+            let completedItemIds = Set(snapshot.documents.map { $0.documentID })
+            
+            print("DEBUG Subcollection Listener: \(completedItemIds.count) erledigte Item-IDs für User '\(userId)' empfangen: \(completedItemIds)")
+            completion(.success(completedItemIds))
         }
     }
 }
