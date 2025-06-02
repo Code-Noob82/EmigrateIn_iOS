@@ -19,14 +19,15 @@ struct StateSelectionView: View {
                 .ignoresSafeArea()
             
             NavigationStack {
-                VStack(spacing: 25) {
+                VStack(spacing: 20) {
                     
                     // Hauptüberschrift
                     Text("Wähle dein Bundesland")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                        .font(.title2)
+                        .fontWeight(.semibold)
                         .foregroundColor(AppStyles.primaryTextColor)
                         .multilineTextAlignment(.center)
+                        .padding(.bottom, 5)
                     
                     // Ausführlicher Hinweistext
                     Text("Diese Angabe hilft uns, dir spezifische Informationen für Behörden, Apostillen und mehr in deinem Bundesland anzuzeigen. \nDu kannst deine Auswahl jederzeit in deinem Profil ändern.")
@@ -48,11 +49,8 @@ struct StateSelectionView: View {
                         }
                     }
                     .pickerStyle(.inline)
-                    .background(
-                        RoundedRectangle(cornerRadius: 30)
-                           // .fill(Color.black.opacity(0.3))
-                            .stroke(AppStyles.primaryTextColor.opacity(0.5), lineWidth: 1)
-                    )
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(20)
                     .tint(AppStyles.primaryTextColor)
                     
                     Spacer()
@@ -64,7 +62,11 @@ struct StateSelectionView: View {
                             // und die App-Logik dies steuert. Kein dismiss() hier, um den authViewModel Flow nicht zu stören.
                         }
                     }
-                    .primaryButtonStyle()
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(AppStyles.buttonBackgroundColor)
+                    .foregroundColor(AppStyles.buttonTextColor)
+                    .clipShape(Capsule()) // Jetzt eine Kapselform!
                     .disabled(viewModel.selectedStateId == nil ||
                               viewModel.isLoading) // Deaktivieren, wenn nichts ausgewählt oder am Laden
                     // Zusätzliche visuelle Deaktivierung, falls der Button-Stil nicht greift
@@ -79,12 +81,10 @@ struct StateSelectionView: View {
                     }
                 }
                 .padding()
-                .background(AppStyles.backgroundGradient)
-                .cornerRadius(15)
-                .padding(.horizontal)
-                .frame(maxHeight: .infinity)
+                .frame(maxWidth: .infinity)
                 .navigationTitle("Profil vervollständigen")
                 .navigationBarTitleDisplayMode(.inline)
+                .background(AppStyles.backgroundGradient)
                 .toolbarBackground(AppStyles.backgroundGradient, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbarColorScheme(AppStyles.primaryTextColor.isDark ? .light : .dark, for: .navigationBar)

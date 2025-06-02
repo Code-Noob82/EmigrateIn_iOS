@@ -155,8 +155,8 @@ struct ProfileView: View {
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            //.background(AppStyles.secondaryBackgroundColor.opacity(0.3))
-                            .cornerRadius(10)
+                            .background(AppStyles.secondaryTextColor.opacity(0.1))
+                            .cornerRadius(20)
                             .padding(.horizontal)
                             
                         }
@@ -223,14 +223,14 @@ struct ProfileView: View {
                                         .frame(maxWidth: .infinity)
                                         .background(AppStyles.buttonBackgroundColor.opacity(0.8))
                                         .foregroundColor(AppStyles.buttonTextColor)
-                                        .cornerRadius(8)
+                                        .clipShape(Capsule())
                                 }
                                 .padding(.top, 10)
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(AppStyles.secondaryTextColor.opacity(0.3))
-                            .cornerRadius(10)
+                            .cornerRadius(20)
                             .padding(.horizontal)
                         }
                         Button {
@@ -245,7 +245,7 @@ struct ProfileView: View {
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(AppStyles.buttonBackgroundColor)
-                            .cornerRadius(10)
+                            .clipShape(Capsule())
                         }
                         .padding(.horizontal)
                         
@@ -261,7 +261,7 @@ struct ProfileView: View {
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(AppStyles.destructiveColor)
-                            .cornerRadius(10)
+                            .clipShape(Capsule())
                         }
                         .padding(.horizontal)
                         Spacer()
