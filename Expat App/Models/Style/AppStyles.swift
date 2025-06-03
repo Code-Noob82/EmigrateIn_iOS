@@ -50,6 +50,10 @@ struct AppStyles {
     static let secondaryButtonFont: Font = .subheadline
     static let commonButtonCornerRadius: CGFloat = buttonHeight / 2 // Für Kapselform
     static let buttonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
+    
+    static var cardBackgroundColor: Color {
+            Color(UIColor.secondarySystemGroupedBackground) // Hintergrund für Karten
+        }
 }
 
 extension AppStyles {
