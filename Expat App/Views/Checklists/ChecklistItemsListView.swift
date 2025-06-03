@@ -123,12 +123,16 @@ struct ChecklistItemsListView: View {
             Text("Gesamtfortschritt")
                 .font(.subheadline)
                 .foregroundColor(AppStyles.secondaryTextColor)
-            
-            ProgressView(value: viewModel.totalProgress)
-                .progressViewStyle(LinearProgressViewStyle(tint: AppStyles.primaryTextColor))
-                .scaleEffect(x: 1, y: 2, anchor: .center)
-                .animation(.easeOut, value: viewModel.totalProgress)
-            
+            HStack {
+                ProgressView(value: viewModel.totalProgress)
+                    .progressViewStyle(LinearProgressViewStyle(tint: AppStyles.primaryTextColor))
+                    .scaleEffect(x: 1, y: 2, anchor: .center)
+                    .animation(.easeOut, value: viewModel.totalProgress)
+            }
+            .padding(.top, 5)
+            .padding(.bottom, 5)
+            .frame(maxWidth: .infinity)
+            .background(AppStyles.cellBackgroundColor.opacity(0.5))
             Text("\(viewModel.totalCompletedItems) von \(viewModel.totalItems) erledigt")
                 .font(.caption)
                 .foregroundColor(AppStyles.secondaryTextColor)

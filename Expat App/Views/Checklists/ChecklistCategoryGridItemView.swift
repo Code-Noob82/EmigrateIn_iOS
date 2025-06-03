@@ -12,10 +12,10 @@ struct ChecklistCategoryGridItemView: View {
     
     var body: some View {
         VStack {
-            // Optional: Füge ein Icon hinzu, wenn ChecklistCategory ein iconName hätte
-            // Wie bei InfoCategory, könntest du hier ein Image(systemName: category.iconName) anzeigen
+            // Optional: Ein Icon hinzufügen, wenn ChecklistCategory ein iconName hätte
+            // Wie bei InfoCategory, ein Image(systemName: category.iconName) anzeigen
             // Da ChecklistCategory aktuell kein iconName hat, lasse ich es hier weg.
-            // Falls du Icons hinzufügen möchtest, müsstest du dein ChecklistCategory-Modell erweitern.
+            // Falls Icons hinzufügen -> ChecklistCategory-Modell erweitern.
             
             Text(category.title)
                 .font(.headline)
