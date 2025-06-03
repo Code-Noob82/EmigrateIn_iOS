@@ -47,7 +47,7 @@ struct ChecklistCategoryGridItemView: View {
         // MARK: - Feste Größe für Grid-Elemente
         .frame(width: 160, height: 160) // Feste Größe, anpassen falls nötig
         // MARK: - Hintergrund und Rand
-        .background(AppStyles.cellBackgroundColor.opacity(0.8)) // Etwas Transparenz
+        .background(AppStyles.cellBackgroundColor.opacity(0.5)) // Etwas Transparenz
         .cornerRadius(15) // Abgerundete Ecken
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5) // Leichter Schatten
         .overlay(

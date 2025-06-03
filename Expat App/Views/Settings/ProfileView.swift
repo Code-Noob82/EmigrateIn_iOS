@@ -155,7 +155,7 @@ struct ProfileView: View {
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(AppStyles.secondaryTextColor.opacity(0.1))
+                            .background(AppStyles.cellBackgroundColor.opacity(0.5))
                             .cornerRadius(20)
                             .padding(.horizontal)
                             
@@ -229,7 +229,7 @@ struct ProfileView: View {
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(AppStyles.secondaryTextColor.opacity(0.3))
+                            .background(AppStyles.cellBackgroundColor.opacity(0.5))
                             .cornerRadius(20)
                             .padding(.horizontal)
                         }

@@ -38,7 +38,7 @@ struct InfoCategoryGridItemView: View {
         }
         .padding() // Innenabstand für das gesamte Grid-Element
         .frame(width: 160, height: 160) // Sorgt dafür, dass die Elemente eine Mindesthöhe haben und den Platz ausfüllen
-        .background(AppStyles.cellBackgroundColor.opacity(0.8)) // Hintergrundfarbe für das Grid-Element
+        .background(AppStyles.cellBackgroundColor.opacity(0.5)) // Hintergrundfarbe für das Grid-Element
         .cornerRadius(15) // Abgerundete Ecken
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5) // Leichter Schatten
         .overlay(

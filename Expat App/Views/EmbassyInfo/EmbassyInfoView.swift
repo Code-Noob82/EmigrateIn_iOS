@@ -75,7 +75,7 @@ struct EmbassyInfoView: View {
                         )
                         .lineLimit(1)
                         .padding(EdgeInsets(top: 12, leading: 15, bottom: 12, trailing: 15))
-                        .background(AppStyles.primaryTextColor.opacity(0.12))
+                        .background(AppStyles.cellBackgroundColor.opacity(0.5))
                         .accentColor(AppStyles.primaryTextColor)
                         .cornerRadius(AppStyles.buttonCornerRadius)
                         .overlay(
@@ -216,4 +216,5 @@ struct EmbassyInfoView: View {
 
 #Preview {
     EmbassyInfoView()
+        .environmentObject(EmbassyInfoViewModel())
 }

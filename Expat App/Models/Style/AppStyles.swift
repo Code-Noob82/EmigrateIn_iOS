@@ -49,7 +49,7 @@ struct AppStyles {
     static let primaryButtonFont: Font = .headline
     static let secondaryButtonFont: Font = .subheadline
     static let commonButtonCornerRadius: CGFloat = buttonHeight / 2 // Für Kapselform
-    static let buttonCornerRadius: CGFloat = 8 // Für abgerundete Ecken
+    static let buttonCornerRadius: CGFloat = 20 // Für abgerundete Ecken
     
     static var cardBackgroundColor: Color {
             Color(UIColor.secondarySystemGroupedBackground) // Hintergrund für Karten

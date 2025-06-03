@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     // MARK: - Zustandvariablen
-    @State private var pushNotificationsEnabled: Bool = true
+    
     @State private var selectedTheme: AppTheme = .system
     
     private var appVersion: String {
@@ -18,14 +18,14 @@ struct SettingsView: View {
     private var buildNumber: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
     }
+    private var currentYear: String {
+        let year = Calendar.current.component(.year, from: Date())
+        return String(year)
+    }
     private var appDisplayName: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ??
         Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ??
         "EmigrateIn" // Fallback
-    }
-    private var currentYear: String {
-        let year = Calendar.current.component(.year, from: Date())
-        return String(year)
     }
     
     var body: some View {
@@ -49,19 +49,8 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         
-                        // MARK: - Benachrichtigungen Karte
-                        settingsCard(title: "Benachrichtigungen") {
-                            SettingsRow {
-                                Toggle(isOn: $pushNotificationsEnabled) {
-                                    Text("Push-Benachrichtigungen")
-                                        .foregroundColor(AppStyles.primaryTextColor)
-                                }
-                                .tint(Color.accentColor)
-                                .onChange(of: pushNotificationsEnabled) { _, newValue in
-                                    print("Push-Benachrichtigungen: \(newValue)")
-                                }
-                            }
-                        }
+                        // MARK: - Benachrichtigungen Karte (jetzt ausgelagert)
+                        NotificationSettingsSectionView()
                         
                         // MARK: - Darstellung Karte
                         settingsCard(title: "Darstellung") {
@@ -91,14 +80,13 @@ struct SettingsView: View {
                                 }
                             }
                         }
-                        
                         // MARK: - Rechtliches Karte
                         settingsCard(title: "Rechtliches") {
                             SettingsRow {
                                 navigationButton(title: "Datenschutzerklärung", systemImage: "doc.text.fill", action: openPrivacyPolicy)
                             }
                             SettingsRow {
-                                navigationButton(title: "Nutzungsbedingungen", systemImage: "doc.text.fill", action: openTermsOfService)
+                                navigationButton(title: "Nutzungsbedingungen & AGB", systemImage: "doc.text.fill", action: openTermsOfService)
                             }
                         }
                         
@@ -151,7 +139,7 @@ struct SettingsView: View {
             .preferredColorScheme(colorScheme(for: selectedTheme))
         }
     }
-
+    
     // MARK: - Hilfsfunktion für Karten-Layout (unverändert)
     @ViewBuilder
     private func settingsCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -165,11 +153,11 @@ struct SettingsView: View {
             
             content()
         }
-        .background(AppStyles.backgroundGradient)
-        .cornerRadius(12)
+        .background(AppStyles.cellBackgroundColor.opacity(0.5))
+        .cornerRadius(20)
         .padding(.horizontal)
     }
-
+    
     // MARK: - Hilfsfunktion für Navigations-Buttons in Karten (unverändert)
     @ViewBuilder
     private func navigationButton(title: String, systemImage: String, action: @escaping () -> Void) -> some View {

@@ -48,7 +48,7 @@ struct ChecklistItemGridItemView: View {
         .frame(width: 160, height: 120) // Feste Größe
         .background(
             RoundedRectangle(cornerRadius: 15)
-                .fill(AppStyles.cellBackgroundColor.opacity(0.8))
+                .fill(AppStyles.cellBackgroundColor.opacity(0.5))
                 .overlay(
                     RoundedRectangle(cornerRadius: 15)
                     // Randfarbe je nach Status: Verwendet viewModel.isItemCompleted(item)
