@@ -126,7 +126,7 @@ Dieser Ausblick zeigt die geplante Entwicklung von einer fokussierten Starthilfe
 
 ## Danksagung
 
-- Dank an [Name des Tutors] für die Betreuung.
+- Vielen Dank an [Florian Rhein, Renan Wurster, Anna Hoff] für die unermüdliche Unterstützung und Hilfe bei jeglichem Problem. Lieben Dank auch an meine Kursbetreuerin [Lisa Kipp] für die Betreuung, gute Laune und Hilfe bei allen Fragen rund um den Kurs.
 - Inspiration und erste Informationen aus den Ressourcen von [AuswandernHilft.de].
 - Daten der deutschen Vertretungen bereitgestellt durch die OpenData-Schnittstelle des Auswärtigen Amtes.
 - Backend-Dienste bereitgestellt durch Google Firebase.
