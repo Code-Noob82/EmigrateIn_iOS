@@ -88,7 +88,7 @@ Diese App nutzt externe Bibliotheken, die über den **Swift Package Manager (SPM
 
 1. FirebaseAuth: Dies ist das Firebase Authentication SDK, das Funktionen für die Benutzerauthentifizierung (Anmeldung, Registrierung, Abmeldung etc.) bereitstellt.
 2. FirebaseFirestore: Dies ist das Firebase Firestore SDK, das den Zugriff auf die NoSQL-Cloud-Datenbank Firestore ermöglicht.
-3. GoogleSignIn: Dies ist das Google Sign-In SDK, das die Anmeldung mit Google-Konten in Ihrer App ermöglicht.
+3. GoogleSignIn: Dies ist das Google Sign-In SDK, das die Anmeldung mit Google-Konten in der App ermöglicht.
 4. GoogleSignInSwift: Dies ist eine Swift-spezifische Erweiterungsbibliothek für das Google Sign-In SDK, die oft für eine einfachere Integration mit SwiftUI verwendet wird.
 
 
