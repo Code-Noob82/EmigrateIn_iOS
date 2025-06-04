@@ -1,10 +1,10 @@
 # EmigrateIn - Expat Familien App (MVP)
 
-**Gut vorbereitet auswandern – mit EmigrateIn.**
+**"EmigrateIn - Dein smarter Weg ins Ausland"**
 
 ## Projektbeschreibung
 
-**EmigrateIn** *(Arbeitstitel, Name wird ggf. noch geändert)* ist eine native iOS-App, die als Minimum Viable Product (MVP) im Rahmen des **Abschlussprojekts Modul 3 - App-Entwicklung iOS - am Syntax Institut** entwickelt wurde.
+**EmigrateIn** ist eine native iOS-App, die als Minimum Viable Product (MVP) im Rahmen des **Abschlussprojekts Modul 3 - App-Entwicklung iOS - am Syntax Institut** entwickelt wurde.
 
 ## Ziel der App
 
@@ -24,8 +24,8 @@ Im Gegensatz zu allgemeinen Foren oder Webseiten, konzentriert sich EmigrateIn *
 
 ## Kern-Features (MVP V1.0 - Fokus: Deutsche Familien nach Südzypern)
 
-- [ ] **Onboarding:** Nach dem Start durchläuft der Nutzer ein kurzes Onboarding. Über eine Hauptnavigation (z.B. Tab Bar) kann er auf die verschiedenen Info-Kategorien und Checklisten zugreifen. Informationen können gelesen, Checklistenpunkte abgehakt werden. Die Botschaftsinformationen werden dynamisch über eine API geladen.
-- [ ] **Info-Hub**: Ein strukturierter Bereich mit aufbereiteten Informationen zu essenziellen Themen:
+- [X] **Onboarding:** Nach dem Start durchläuft der Nutzer ein kurzes Onboarding. Über eine Hauptnavigation (z.B. Tab Bar) kann er auf die verschiedenen Info-Kategorien und Checklisten zugreifen. Informationen können gelesen, Checklistenpunkte abgehakt werden. Die Botschaftsinformationen werden dynamisch über eine API geladen.
+- [X] **Info-Hub**: Ein strukturierter Bereich mit aufbereiteten Informationen zu essenziellen Themen:
 - Visa & Einreise *(MEU1/Yellow Slip, MEU2)*
 - Ankunft & Erste Schritte *(Behördengänge: TIN, Sozialversicherung, GESY)*
 - Wohnen *(Mieten/Kaufen Basics, Mietvertrag, Nebenkosten)*
@@ -33,12 +33,12 @@ Im Gegensatz zu allgemeinen Foren oder Webseiten, konzentriert sich EmigrateIn *
 - Gesundheitssystem *(GESY Überblick, Registrierung, Arztsuche Basics)*
 - Kosten & Budget *(Statische Übersicht Lebenshaltungskosten, Einmalkosten)*
 - Kontakte & Sicherheit *(Botschafts-Info, Notfallnummern, Hinweise zur Sicherheitsrecherche)*
-- [ ] **Interaktive Checklisten:** Detaillierte, abharkbare Checklisten für die Phasen:
+- [X] **Interaktive Checklisten:** Detaillierte, abharkbare Checklisten für die Phasen:
 - Vorbereitung in Deutschland
 - Ankunft & Erste Schritte in Zypern
 - Speicherung des Fortschritts lokal `(SwiftData)` oder via Firebase Authentication.
-- [ ] **Botschafts-Information:** Abruf und Anzeige der Kontaktdaten der Deutschen Botschaft in Nikosia über die OpenData-API des Auswärtigen Amtes `(travelwarning.api.bund.dev)`.
-- [ ] **Fehlerbehandlung:** Nutzerfreundliche Anzeige von Fehlern *(z.B. bei Netzwerkproblemen oder API-Fehlern)* mittels Alerts.
+- [X] **Botschafts-Information:** Abruf und Anzeige der Kontaktdaten der Deutschen Botschaft in Nikosia über die OpenData-API des Auswärtigen Amtes `(travelwarning.api.bund.dev)`.
+- [X] **Fehlerbehandlung:** Nutzerfreundliche Anzeige von Fehlern *(z.B. bei Netzwerkproblemen oder API-Fehlern)* mittels Alerts.
 
 ## Design
 
@@ -86,13 +86,11 @@ Um die ViewModels von der konkreten Datenquelle (Firebase, API, UserDefaults) zu
 ### Externe Abhängigkeiten / Frameworks
 Diese App nutzt externe Bibliotheken, die über den **Swift Package Manager (SPM)** eingebunden werden:
 
-- **Firebase:**
+1. FirebaseAuth: Dies ist das Firebase Authentication SDK, das Funktionen für die Benutzerauthentifizierung (Anmeldung, Registrierung, Abmeldung etc.) bereitstellt.
+2. FirebaseFirestore: Dies ist das Firebase Firestore SDK, das den Zugriff auf die NoSQL-Cloud-Datenbank Firestore ermöglicht.
+3. GoogleSignIn: Dies ist das Google Sign-In SDK, das die Anmeldung mit Google-Konten in Ihrer App ermöglicht.
+4. GoogleSignInSwift: Dies ist eine Swift-spezifische Erweiterungsbibliothek für das Google Sign-In SDK, die oft für eine einfachere Integration mit SwiftUI verwendet wird.
 
-  - **Zweck:** Dient als Backend-as-a-Service (BaaS).
-  - **Verwendete Module (Beispiele):**
-    - `FirebaseFirestore`: Für den Zugriff auf die NoSQL-Dokumentendatenbank Firestore *(Speicherung von Infos, Checklisten)*.
-    - `FirebaseFirestore`: Bietet Codable-Unterstützung für Firestore, um Daten einfach in Swift-Strukturen zu mappen *(z.B. mit @DocumentID)*.
-    - `FirebaseAuth` *(optional)*: Falls Nutzerkonten für die Speicherung von Checklisten-Fortschritten implementiert werden.
 
 ## Ausblick
 
