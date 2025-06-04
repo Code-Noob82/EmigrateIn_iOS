@@ -56,10 +56,10 @@ struct AuthenticationView: View {
                 StateSelectionView()
             }
             // Zeigt Fehlermeldungen an
-            .alert("Fehler", isPresented: .constant(viewModel.errorMessage != nil), actions: {
-                Button("OK", role: .cancel) { viewModel.errorMessage = nil }
+            .alert("Fehler", isPresented: .constant(viewModel.inlineMessage != nil), actions: {
+                Button("OK", role: .cancel) { viewModel.inlineMessage = nil }
             }, message: {
-                Text(viewModel.errorMessage ?? "Unbekannter Fehler")
+                Text(viewModel.inlineMessage ?? "Unbekannter Fehler")
             })
         }
     }

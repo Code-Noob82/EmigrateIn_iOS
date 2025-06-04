@@ -73,7 +73,7 @@ struct StateSelectionView: View {
                     .opacity(viewModel.selectedStateId == nil ||
                              viewModel.isLoading ? 0.6 : 1.0)
                     
-                    if let errorMessage = viewModel.errorMessage {
+                    if let errorMessage = viewModel.inlineMessage {
                         Text(errorMessage)
                             .foregroundColor(AppStyles.destructiveColor)
                             .font(.caption)

@@ -16,10 +16,10 @@ extension UIApplication {
             .filter { $0.activationState == .foregroundActive }
         // Nimm die erste Scene, die eine UIWindowScene ist
             .first { $0 is UIWindowScene } as? UIWindowScene
-        
+                 
         // Finde das Fenster in dieser Scene, das das Key Window ist
         let keyWindow = windowScene?.windows.first(where: { $0.isKeyWindow })
-        
+                 
         // Gehe von RootViewController zum obersten präsentierten Controller
         var topController = keyWindow?.rootViewController
         while let presentedViewController = topController?.presentedViewController {

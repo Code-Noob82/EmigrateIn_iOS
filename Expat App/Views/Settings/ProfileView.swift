@@ -15,7 +15,7 @@ struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel
     @State private var editableDisplayName: String = "" // NEU: Für das TextField
     @State private var isEditingDisplayName = false
-    @State private var showingDeleteConfirmation = false // NEU: Steuert den Bearbeitungsmodus
+    
     let globalBackgroundGradient = AppStyles.backgroundGradient
     let headerBackground = AppStyles.backgroundGradient
     
@@ -74,8 +74,8 @@ struct ProfileView: View {
                                             // 2. In den Bearbeitungsmodus wechseln
                                             self.isEditingDisplayName = true
                                             // 3. Alte Fehlermeldungen für diese Sektion löschen
-                                            if authViewModel.errorMessage?.contains("Anzeigename") == true {
-                                                authViewModel.errorMessage = nil
+                                            if authViewModel.inlineMessage?.contains("Anzeigename") == true {
+                                                authViewModel.inlineMessage = nil
                                             }
                                             if authViewModel.successMessage?.contains("Anzeigename") == true {
                                                 authViewModel.successMessage = nil
@@ -139,15 +139,15 @@ struct ProfileView: View {
                                                 }
                                             }
                                         }
-                                } else if let errorMessage = authViewModel.errorMessage, errorMessage.contains("Anzeigename") {
+                                } else if let errorMessage = authViewModel.inlineMessage, errorMessage.contains("Anzeigename") {
                                     Text(errorMessage)
                                         .font(.caption)
                                         .foregroundColor(.red)
                                         .padding(.top, 2)
                                         .onAppear { // Nachricht nach einiger Zeit ausblenden
                                             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-                                                if authViewModel.errorMessage?.contains("Anzeigename") == true {
-                                                    authViewModel.errorMessage = nil
+                                                if authViewModel.inlineMessage?.contains("Anzeigename") == true {
+                                                    authViewModel.inlineMessage = nil
                                                 }
                                             }
                                         }
@@ -250,50 +250,42 @@ struct ProfileView: View {
                         .padding(.horizontal)
                         
                         // Konto löschen Button
-                        Button(role: .destructive) {
-                            showingDeleteConfirmation = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "trash.fill")
-                                Text("Konto löschen")
-                            }
-                            .foregroundColor(AppStyles.destructiveTextColor)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyles.destructiveColor)
-                            .clipShape(Capsule())
+                        Button("Konto löschen") {
+                            authViewModel.initiateAccountDeletion()
                         }
+                        .foregroundColor(AppStyles.destructiveTextColor)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(AppStyles.destructiveColor)
+                        .clipShape(Capsule())
                         .padding(.horizontal)
-                        Spacer()
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.vertical)
                 }
             }
             .background(globalBackgroundGradient.ignoresSafeArea())
             .navigationBarBackButtonHidden(true)
-            .alert("Konto wirklich löschen?", isPresented: $showingDeleteConfirmation) {
-                Button("Abbrechen", role: .cancel) {
-                }
-                Button("Löschen", role: .destructive) {
+            .alert("Konto löschen bestätigen", isPresented: $authViewModel.showPasswordReauthPrompt) {
+                SecureField("Passwort", text: $authViewModel.reauthPasswordInput)
+                Button("Löschen bestätigen", role: .destructive) {
                     Task {
-                        await authViewModel.deleteAccount()
+                        await authViewModel.confirmAndDeleteAccount()
                     }
                 }
+                Button("Abbrechen", role: .cancel) {
+                    authViewModel.reauthPasswordInput = ""
+                    authViewModel.inlineMessage = nil
+                }
             } message: {
-                Text("Dieser Vorgang kann nicht rückgängig gemacht werden. Alle deine Daten werden dauerhaft gelöscht.")
+                Text("Bitte gib dein Passwort ein, um das Löschen deines Kontos zu bestätigen. Diese Aktion kann nicht rückgängig gemacht werden und alle deine Daten gehen verloren.")
             }
-            .alert("Fehler beim Löschen", isPresented: .constant(authViewModel.errorMessage != nil && authViewModel.errorMessage!.contains("löschen")), actions:{
-                Button("OK", role: .cancel) { authViewModel.errorMessage = nil }
-            }, message: {
-                Text(authViewModel.errorMessage ?? "Ein unbekannter Fehler ist aufgetreten.")
-            })
             .onAppear {
                 self.editableDisplayName = authViewModel.userProfile?.displayName ?? ""
-                if authViewModel.successMessage?.contains("Nutzername") == true {
+                if authViewModel.successMessage?.contains("Anzeigename") == true {
                     authViewModel.successMessage = nil
                 }
-                if authViewModel.errorMessage?.contains("Nutzername") == true {
-                    authViewModel.errorMessage = nil
+                if authViewModel.inlineMessage?.contains("Anzeigename") == true {
+                    authViewModel.inlineMessage = nil
                 }
             }
             .onChange(of: authViewModel.userProfile?.displayName) { oldName, newName in

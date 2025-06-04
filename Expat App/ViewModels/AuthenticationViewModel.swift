@@ -21,7 +21,9 @@ class AuthenticationViewModel: ObservableObject {
     @Published var selectedStateId: String? = nil // Für Bundesland-Auswahl
     @Published var germanStates: [StateSpecificInfo] = [] // Liste aller Bundesländer
     
-    @Published var errorMessage: String? = nil // Für Fehlermeldungen
+    // @Published var errorMessage: String? = nil // ERSETZT durch activeError für kritische Fehler
+    @Published var inlineMessage: String? = nil // Für Fehlermeldungen
+    
     @Published var isLoading = false // Für Ladeindikatoren
     
     @Published var currentAuthView: AuthViewType = .login // Startet initial mit Login
@@ -35,6 +37,13 @@ class AuthenticationViewModel: ObservableObject {
     @Published var isLoadingStateDetails: Bool = false // NEU: Ladezustand für diese spezifische Aktion
     
     @Published var selectedTab: TabSelection = .home
+    
+    // NEU: Für die Re-Authentifizierungs-UI (z.B. Alert mit Passwortfeld)
+    @Published var showPasswordReauthPrompt = false
+    @Published var reauthPasswordInput = "" // Gebunden an das Passwortfeld im Alert/Sheet
+    
+    // NEU: Ein zentraler State für anzuzeigende Fehler
+    @Published var activeError: AppError? = nil
     
     // Eine homeStateName Computed Property
     var homeStateName: String? {
@@ -63,6 +72,7 @@ class AuthenticationViewModel: ObservableObject {
             
             // Prüft, ob ein Nutzer angemeldet ist
             Task { @MainActor in
+                self.activeError = nil
                 if let user = user {
                     print("User is signed in with uid: \(user.uid), isAnonymous: \(user.isAnonymous)")
                     // Setzt den Status auf angemeldet
@@ -70,7 +80,7 @@ class AuthenticationViewModel: ObservableObject {
                     self.isAnonymousUser = user.isAnonymous
                     self.email = user.email ?? ""
                     self.confirmPassword = ""
-                    self.errorMessage = nil
+                    self.inlineMessage = nil
                     self.successMessage = nil
                     
                     if !user.isAnonymous {
@@ -94,7 +104,7 @@ class AuthenticationViewModel: ObservableObject {
                     self.currentAuthView = .login // Zeigt Login-Screen, wenn ausgeloggt
                     self.showStateSelection = false // Reset state selection flag
                     self.germanStates = []
-                    self.errorMessage = nil
+                    self.inlineMessage = nil
                     self.successMessage = nil
                 }
                 self.isLoading = false
@@ -116,7 +126,7 @@ class AuthenticationViewModel: ObservableObject {
             return
         }
         self.isLoading = true
-        self.errorMessage = nil
+        self.inlineMessage = nil
         print("Fetching German states from Firestore...") // Debug-Ausgabe
         
         do {
@@ -128,7 +138,7 @@ class AuthenticationViewModel: ObservableObject {
             // Prüft, ob Dokumente vorhanden sind
             guard !querySnapshot.documents.isEmpty else {
                 print("No state documents found.")
-                self.errorMessage = "Keine Bundesländer gefunden."
+                self.activeError = .generalError(message: "Keine Bundesländer gefunden.")
                 self.germanStates = []
                 self.isLoading = false // Ladezustand zurücksetzen
                 return // Beendet, wenn keine Dokumente da sind
@@ -140,14 +150,14 @@ class AuthenticationViewModel: ObservableObject {
                     return try document.data(as: StateSpecificInfo.self)
                 } catch {
                     print("Error decoding state document \(document.documentID): \(error.localizedDescription)")
-                    // Optional: Fehler sammeln oder spezifischer loggen
+                    self.activeError = .fetchStatesFailed(originalError: error)
                     return nil // Überspringt dieses Dokument bei Fehler
                 }
             }
             print("Successfully fetched \(self.germanStates.count) states.")
         } catch {
             print("Error fetching states: \(error.localizedDescription)")
-            self.errorMessage = "Fehler beim Abrufen der Bundesländer: \(error.localizedDescription)"
+            self.activeError = .fetchStatesFailed(originalError: error)
             self.germanStates = []
         }
         // Setzt Ladezustand zurück, egal ob Erfolg oder Fehler
@@ -156,7 +166,7 @@ class AuthenticationViewModel: ObservableObject {
     
     func signInWithEmail() {
         isLoading = true
-        errorMessage = nil
+        inlineMessage = nil
         successMessage = nil
         Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
@@ -164,7 +174,7 @@ class AuthenticationViewModel: ObservableObject {
             Task { @MainActor in
                 self.isLoading = false // Setzt isLoading hier zurück
                 if let error = error {
-                    self.errorMessage = self.mapFirebaseError(error) // Verbesserte Fehlermeldung
+                    self.activeError = .generalLoginFailed(originalError: error)
                 }
             }
         }
@@ -172,21 +182,19 @@ class AuthenticationViewModel: ObservableObject {
     
     func signUpWithEmail() {
         guard password == confirmPassword else {
-            errorMessage = "Passwörter stimmen nicht überein."
+            self.activeError = .generalError(message:"Passwörter stimmen nicht überein.")
             return
         }
         isLoading = true
-        errorMessage = nil
+        activeError = nil
         successMessage = nil
         
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
             Task { @MainActor in
-                // Der Task { @MainActor in ... } ist sinnvoll, da dieser
-                // Completion Handler von Firebase nicht garantiert auf dem Main Thread läuft.
                 self.isLoading = false // Setzt isLoading hier zurück
                 if let error = error {
-                    self.errorMessage = self.mapFirebaseError(error)
+                    self.activeError = .generalSignUpFailed(originalError: error)
                     self.isLoading = false
                     return
                 }
@@ -196,7 +204,7 @@ class AuthenticationViewModel: ObservableObject {
                 if success {
                     self.showStateSelection = true
                 } else {
-                    self.errorMessage = "Fehler beim Erstellen des Nutzerrofils."
+                    self.inlineMessage = "Fehler beim Erstellen des Nutzerrofils."
                 }
             }
         }
@@ -205,7 +213,7 @@ class AuthenticationViewModel: ObservableObject {
     // --- Anonyme Anmeldung ---
     func signInAnonymously() async {
         isLoading = true
-        errorMessage = nil
+        activeError = nil
         successMessage = nil
         
         do {
@@ -216,19 +224,19 @@ class AuthenticationViewModel: ObservableObject {
             // (Passiert automatisch durch @MainActor am Ende der Funktion)
         } catch let error {
             print("Error signing in anonymously: \(error)")
-            self.errorMessage = "Fehler bei der anonymen Anmeldung: \(error.localizedDescription)"
+            self.activeError = .anonymousSignInFailed(originalError: error)
         }
         isLoading = false
     }
     
     func signInWithGoogle() async {
         isLoading = true
-        errorMessage = nil
+        activeError = nil
         successMessage = nil
         
         // 1. Google ID Token über GoogleSignIn SDK holen
         guard let rootViewController = UIApplication.shared.keyWindowPresentedController else {
-            errorMessage = "Google Sign-In UI konnte nicht präsentiert werden."
+            self.activeError = .generalError(message: "Google Sign-In UI konnte nicht präsentiert werden.")
             isLoading = false
             return
         }
@@ -238,7 +246,7 @@ class AuthenticationViewModel: ObservableObject {
             let gidSignInResult = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
             
             guard let idToken = gidSignInResult.user.idToken?.tokenString else {
-                throw NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Google ID-Token nicht erhalten."])
+                throw AppError.googleSignInFailed(originalError: NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Google ID-Token nicht erhalten."]))
             }
             
             // 2. Firebase Credential erstellen
@@ -255,13 +263,13 @@ class AuthenticationViewModel: ObservableObject {
             
         } catch let error {
             print("Error signing in with Google: \(error)")
-            // Spezifische Fehler von Google abfangen? GIDSignInErrorCode
-            if (error as NSError).domain == kGIDSignInErrorDomain, (error as NSError).code == GIDSignInError.canceled.rawValue {
+            let nsError = error as NSError
+            if nsError.domain == kGIDSignInErrorDomain && nsError.code == GIDSignInError.canceled.rawValue {
                 print("Google Sign In cancelled by user.")
                 // Setze keine Fehlermeldung, da der Nutzer abgebrochen hat
-                self.errorMessage = nil
+                self.inlineMessage = nil
             } else {
-                self.errorMessage = "Fehler bei Google-Anmeldung: \(error.localizedDescription)"
+                self.activeError = .googleSignInFailed(originalError: error, isCancelled: false)
             }
         }
         isLoading = false // Wird am Ende sicher auf dem MainActor gesetzt
@@ -279,12 +287,11 @@ class AuthenticationViewModel: ObservableObject {
         // ein Email/Passwort-Nutzer (wo wir es nicht sicher wissen), prüfen wir das Profil.
         
         isLoading = true // Ladezustand anzeigen während Profilprüfung
-        errorMessage = nil
+        inlineMessage = nil
         print("Checking profile completion for user \(userId)...")
         
         do {
             let documentSnapshot = try await db.collection("user_profiles").document(userId).getDocument()
-            
             if documentSnapshot.exists {
                 // Profil existiert bereits
                 print("Profile exists for user \(userId). Checking for homeStateId.")
@@ -320,7 +327,7 @@ class AuthenticationViewModel: ObservableObject {
         } catch {
             print("Error checking/decoding profile for user \(userId): \(error)")
             self.userProfile = nil
-            self.errorMessage = "Fehler beim Laden/Prüfen des Profils: \(error.localizedDescription)"
+            self.activeError = .fetchProfileFailed(originalError: error)
             // Fallback
             self.showStateSelection = true
         }
@@ -346,22 +353,22 @@ class AuthenticationViewModel: ObservableObject {
             return true
         } catch {
             print("Error creating initial user profile: \(error)")
-            self.errorMessage = "Fehler beim Erstellen des Profils. Bitte versuchen Sie es erneut."
+            self.activeError = .createInitialProfileFailed(originalError: error)
             return false
         }
     }
     
     func saveSelectedState() {
         guard let stateId = selectedStateId else {
-            errorMessage = "Bitte wähle ein Bundesland aus."
+            self.activeError = .generalError(message: "Bitte wähle ein Bundesland aus.")
             return
         }
         guard let userId = Auth.auth().currentUser?.uid else {
-            errorMessage = "Nutzer nicht angemeldet."
+            self.activeError = .generalError(message: "Nutzer nicht angemeldet.")
             return
         }
         isLoading = true
-        errorMessage = nil
+        inlineMessage = nil
         // Der Task hier ist sinnvoll, da der Completion Handler von updateData
         // nicht garantiert auf dem Main Thread läuft.
         Task {
@@ -374,7 +381,7 @@ class AuthenticationViewModel: ObservableObject {
                 self.showStateSelection = false
                 print("Lokales User-Profil nach Speichern aktualisiert: homeStateId sollte jetzt \(self.userProfile?.homeStateId ?? "nil"), Name: \(self.homeStateName ?? "unbekannt") sein")
             } catch {
-                self.errorMessage = "Fehler beim Speichern des Bundeslandes: \(error.localizedDescription)"
+                self.activeError = .stateSelectionSaveFailed(originalError: error)
                 self.showStateSelection = true
             }
             self.isLoading = false
@@ -383,7 +390,7 @@ class AuthenticationViewModel: ObservableObject {
     
     func forgotPassword() {
         isLoading = true
-        errorMessage = nil
+        activeError = nil
         successMessage = nil
         
         Auth.auth().sendPasswordReset(withEmail: email) { [weak self] error in
@@ -392,7 +399,7 @@ class AuthenticationViewModel: ObservableObject {
             Task { @MainActor in
                 self.isLoading = false // Setzt isLoading hier zurück
                 if let error = error {
-                    self.errorMessage = self.mapFirebaseError(error)
+                    self.activeError = .passwordResetFailed(originalError: error)
                 } else {
                     // Erfolgsmeldung anzeigen (z.B. über einen anderen @Published String)
                     print("Password reset email sent.")
@@ -417,55 +424,122 @@ class AuthenticationViewModel: ObservableObject {
         } catch let signOutError as NSError {
             print("Error signing out: %@", signOutError)
             Task { @MainActor in
-                self.errorMessage = "Fehler beim Ausloggen: \(signOutError.localizedDescription)"
+                self.inlineMessage = "Fehler beim Ausloggen: \(signOutError.localizedDescription)"
                 addAuthStateListener() // Auch im Fehlerfall wieder hinzufügen
             }
         }
     }
     
-    func deleteAccount() async {
-        guard let user = Auth.auth().currentUser else {
-            Task { @MainActor in errorMessage = "Fehler: Kein Nutzer angemeldet." }
+    // MARK: - Account Löschen
+    
+    // Iniziert den Account-Löschen Prozess, durch Anstoßen der re-authentication
+    
+    func initiateAccountDeletion() {
+        guard Auth.auth().currentUser != nil else {
+            self.activeError = .generalError(message: "Kein Nutzer angemeldet für Kontolöschung.")
             return
         }
-        let userId = user.uid
+        // Setzt den E-Mail-Wert für die Re-Authentifizierung, falls nicht schon geschehen
+        if let currentUserEmail = Auth.auth().currentUser?.email, self.email.isEmpty {
+            self.email = currentUserEmail
+        }
+        self.reauthPasswordInput = "" // Passwortfeld leeren
+        self.showPasswordReauthPrompt = true // Löst die UI zur Passworteingabe aus
+        self.activeError = nil
+        self.successMessage = nil
+    }
+    
+    // Confirms and executes account deletion after successful re-authentication.
+    // This function should be called after the user has provided their password via the UI.
+    func confirmAndDeleteAccount() async {
+        guard let user = Auth.auth().currentUser else {
+            self.activeError = .accountDeletionFailed(originalError: NSError(domain: "AppAuth", code: -1, userInfo: [NSLocalizedDescriptionKey: "Kein Nutzer angemeldet für Löschbestätigung."]))
+            return
+        }
+        guard let userEmailForReauth = user.email, !userEmailForReauth.isEmpty else {
+            self.activeError = .accountDeletionFailed(originalError: NSError(domain: "AppAuth", code: -2, userInfo: [NSLocalizedDescriptionKey: "E-Mail des Benutzers nicht verfügbar für Re-Authentifizierung."]))
+            return
+        }
+        
+        // Das Passwort kommt jetzt von `reauthPasswordInput`
+        let passwordToReauth = self.reauthPasswordInput
+        
+        guard !passwordToReauth.isEmpty else {
+            self.activeError = .accountDeletionFailed(originalError: NSError(domain: "AppAuth", code: -3, userInfo: [NSLocalizedDescriptionKey: "Passwort für die Bestätigung erforderlich."]))
+            return
+        }
+        
         isLoading = true
-        errorMessage = nil
+        activeError = nil
         successMessage = nil
         
+        let userId = user.uid
+        
         do {
-            // 1. Zusätzliche Nutzerdaten löschen (Profil, Checklisten-Status etc.)
+            // Schritt 1: Re-Authentifizierung
+            print("Attempting to re-authenticate user \(userEmailForReauth)...")
+            let credential = EmailAuthProvider.credential(withEmail: userEmailForReauth, password: passwordToReauth)
+            try await user.reauthenticate(with: credential)
+            print("User re-authenticated successfully.")
+            
+            // Schritt 2: Zusätzliche Nutzerdaten löschen (Profil, Checklisten-Status etc.)
+            // Dies geschieht NACH erfolgreicher Re-Authentifizierung.
             print("Deleting user data from Firestore for userId: \(userId)")
-            try await db.collection("user_profiles").document(userId).delete()
-            print("User profile deleted.")
             
+            // Profil löschen
+            let userProfileRef = db.collection("user_profiles").document(userId)
+            try await userProfileRef.delete()
+            print("User profile deleted from Firestore.")
+            
+            // Checklisten-Status löschen
             let checklistStateRef = db.collection("checklist_states").document(userId)
-            // Sicher prüfen, ob das Dokument existiert, bevor delete aufgerufen wird
-            let checklistDoc = try? await checklistStateRef.getDocument()
-            if checklistDoc?.exists == true {
-                try await checklistStateRef.delete()
-                print("User checklist state deleted.")
-            } else {
-                print("No checklist state found for user \(userId) to delete.")
-            }
+            // Optional: Prüfen, ob das Dokument existiert, bevor `delete` aufgerufen wird,
+            // um Fehler zu vermeiden, falls es nicht existiert. `delete()` auf ein nicht
+            // existierendes Dokument wirft jedoch keinen Fehler.
+            try await checklistStateRef.delete()
+            print("User checklist state deleted from Firestore.")
             
-            // 2. Firebase Auth Nutzer löschen
+            // Schritt 3: Firebase Auth Nutzer löschen
             print("Deleting Firebase Auth user...")
+            
+            let userChecklistStatesRef = db.collection("user_checklist_states").document(userId)
+            try await userChecklistStatesRef.delete()
+            print("User document from user_checklist_states deleted from Firestore.")
+            
             try await user.delete()
             print("Firebase Auth user deleted successfully.")
-            // AuthStateListener wird automatisch auslösen und isAuthenticated auf false setzen.
+            // AuthStateListener wird automatisch auslösen und UI-Status aktualisieren.
+            // `reauthPasswordInput` hier leeren.
+            Task { @MainActor in
+                self.reauthPasswordInput = ""
+                self.successMessage = "Dein Konto wurde erfolgreich gelöscht."
+            }
             
         } catch {
-            print("Error deleting user or associated data: \(error)")
+            print("Error during account deletion process: \(error)")
             let finalErrorMessage: String
-            if let authError = error as NSError?, authError.code == AuthErrorCode.requiresRecentLogin.rawValue {
-                finalErrorMessage = "Sitzung abgelaufen. Bitte melde dich erneut an, um dein Konto zu löschen."
+            if let authError = error as NSError? {
+                switch AuthErrorCode(rawValue: authError.code) {
+                case .requiresRecentLogin:
+                    // Sollte durch Re-Auth abgefangen sein, aber als Fallback
+                    finalErrorMessage = "Sitzung abgelaufen. Bitte versuche den Vorgang erneut."
+                case .wrongPassword:
+                    finalErrorMessage = "Das eingegebene Passwort ist falsch. Bitte versuche es erneut."
+                case .userMismatch:
+                    finalErrorMessage = "Die Anmeldeinformationen stimmen nicht mit dem angemeldeten Benutzer überein."
+                    // Fügen Sie hier weitere spezifische AuthErrorCode-Fälle hinzu, falls nötig
+                default:
+                    finalErrorMessage = "Fehler beim Löschen des Kontos: \(error.localizedDescription)"
+                }
             } else {
                 finalErrorMessage = "Fehler beim Löschen des Kontos: \(error.localizedDescription)"
             }
-            Task { @MainActor in self.errorMessage = finalErrorMessage }
+            Task { @MainActor in
+                self.inlineMessage = finalErrorMessage
+                self.reauthPasswordInput = "" // Passwort bei Fehler ebenfalls leeren
+            }
         }
-        Task { @MainActor in isLoading = false }
+        isLoading = false
     }
     
     // MARK: - Fehlermapping (Korrigiert)
@@ -525,7 +599,7 @@ class AuthenticationViewModel: ObservableObject {
         } catch let signOutError {
             print("Error signing out anonymous user before registration: \(signOutError)")
             Task { @MainActor in
-                self.errorMessage = "Fehler beim Wechsel zur Registrierung: \(signOutError.localizedDescription)"
+                self.inlineMessage = "Fehler beim Wechsel zur Registrierung: \(signOutError.localizedDescription)"
             }
             addAuthStateListener()
         }
@@ -533,14 +607,14 @@ class AuthenticationViewModel: ObservableObject {
     // Neue Funktion, um den displayName nach der Registrierung speichern zu können.
     func updateDisplayName(newName: String) async {
         guard let userId = Auth.auth().currentUser?.uid else {
-            self.errorMessage = "Nutzer nicht angemeldet, um den Namen zu ändern."
+            self.inlineMessage = "Nutzer nicht angemeldet, um den Namen zu ändern."
             print("DEBUG: updateDisplayName: Error - user not signed in.")
             return
         }
         
         let trimmedNewName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedNewName.isEmpty else {
-            self.errorMessage = "Anzeigename darf nicht leer sein."
+            self.inlineMessage = "Anzeigename darf nicht leer sein."
             print("DEBUG: updateDisplayName: Error - New name is empty")
             return
         }
@@ -552,7 +626,7 @@ class AuthenticationViewModel: ObservableObject {
         }
         
         isLoading = true
-        errorMessage = nil
+        inlineMessage = nil
         successMessage = nil
         print("DEBUG: updateDisplayName: Attempting to update displayName to: '\(trimmedNewName)' for userId: '\(userId)'")
         
@@ -572,7 +646,7 @@ class AuthenticationViewModel: ObservableObject {
             self.successMessage = "Anzeigename erfolgreich aktualisiert."
         } catch {
             print("DEBUG: updateDisplayName: Fehler beim Aktualisieren des DisplayName: \(error)")
-            self.errorMessage = "Fehler beim Ändern des Anzeigenamens:: \(error.localizedDescription)"
+            self.inlineMessage = "Fehler beim Ändern des Anzeigenamens:: \(error.localizedDescription)"
         }
         isLoading = false
     }
@@ -587,7 +661,7 @@ class AuthenticationViewModel: ObservableObject {
         
         print("DEBUG: fetchSelectedStateDetails: Attempting to fetch details for stateId '\(homeStateId)'.")
         self.isLoadingStateDetails = true
-        self.errorMessage = nil
+        self.inlineMessage = nil
         
         do {
             let documentSnapshot = try await db.collection("state_specific_info").document(homeStateId).getDocument()
@@ -599,12 +673,12 @@ class AuthenticationViewModel: ObservableObject {
             } else {
                 print("DEBUG: fetchSelectedStateDetails: Document for stateId '\(homeStateId)' does not exist.")
                 self.selectedStateDetails = nil
-                self.errorMessage = "Details für das ausgewählte Bundesland konnten nicht gefunden werden."
+                self.inlineMessage = "Details für das ausgewählte Bundesland konnten nicht gefunden werden."
             }
         } catch {
             print("DEBUG: fetchSelectedStateDetails: Error fetching state details for '\(homeStateId)': \(error)")
             self.selectedStateDetails = nil
-            self.errorMessage = "Fehler beim Laden der Bundesland-Details: \(error.localizedDescription)"
+            self.inlineMessage = "Fehler beim Laden der Bundesland-Details: \(error.localizedDescription)"
         }
         self.isLoadingStateDetails = false
     }

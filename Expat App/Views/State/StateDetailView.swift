@@ -88,7 +88,7 @@ struct StateDetailView: View {
                             }
                         }
                         Spacer()
-                    } else if let errorMessage = authViewModel.errorMessage, errorMessage.contains("Bundesland-Details") {
+                    } else if let errorMessage = authViewModel.inlineMessage, errorMessage.contains("Bundesland-Details") {
                         Text(errorMessage)
                             .foregroundColor(.red)
                             .padding()
